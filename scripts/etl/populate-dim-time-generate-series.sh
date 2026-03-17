@@ -19,6 +19,9 @@ set +a
 : "${POSTGRES_USER:?POSTGRES_USER is required}"
 : "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
 
+RUN_START_EPOCH="$(date +%s)"
+RUN_START_HUMAN="$(date -Iseconds)"
+
 START_TS="${1:-2016-01-01 00:00:00}"
 END_TS="${2:-2026-12-31 23:00:00}"
 
@@ -30,6 +33,7 @@ if [[ "${START_TS}" > "${END_TS}" ]]; then
 fi
 
 echo "Populating dw.dim_time via generate_series..."
+echo "  started_at: ${RUN_START_HUMAN}"
 echo "  start: ${START_TS}"
 echo "  end:   ${END_TS}"
 
@@ -67,3 +71,8 @@ SQL
 echo "Done. Current dw.dim_time row count:"
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T postgres \
   bash -lc "PGPASSWORD='${POSTGRES_PASSWORD}' psql -U '${POSTGRES_USER}' -d '${POSTGRES_DB}' -At -c \"SELECT count(*) FROM dw.dim_time;\""
+
+RUN_END_EPOCH="$(date +%s)"
+RUN_END_HUMAN="$(date -Iseconds)"
+echo "finished_at: ${RUN_END_HUMAN}"
+echo "total_runtime_seconds: $((RUN_END_EPOCH - RUN_START_EPOCH))"
