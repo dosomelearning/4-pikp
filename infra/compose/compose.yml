@@ -36,4 +36,20 @@ services:
       - ../../data/pgdb:${PGDATA}
       - ../platform/postgres/init:/docker-entrypoint-initdb.d:ro
 
-  # Future tools can be added as separate services here (e.g., pgadmin, airflow, etc.).
+  pentaho:
+    image: ${PENTAHO_IMAGE}
+    container_name: ${PENTAHO_CONTAINER}
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    env_file:
+      - .env
+    profiles:
+      - tools
+    ports:
+      - "${PENTAHO_WEB_PORT_HOST}:8080"
+    networks:
+      - pikp_net
+    volumes:
+      - ../platform/pentaho:/workspace/pentaho
+      - ../../raw:/workspace/raw:ro
