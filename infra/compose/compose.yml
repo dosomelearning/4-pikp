@@ -1,0 +1,39 @@
+name: pikp-dev
+
+networks:
+  pikp_net:
+    name: pikp_net
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: pikp-dev-postgres
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: ${PGDATA}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+    ports:
+      - "${PG_PORT_HOST:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1 -p 5432"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks:
+      - pikp_net
+    volumes:
+      - ../../data/pgdb:${PGDATA}
+      - ../platform/postgres/init:/docker-entrypoint-initdb.d:ro
+
+  # Future tools can be added as separate services here (e.g., pgadmin, airflow, etc.).
