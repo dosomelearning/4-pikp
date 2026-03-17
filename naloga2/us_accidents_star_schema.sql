@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS dw.fact_accident (
     start_time_key                 integer NOT NULL REFERENCES dw.dim_time(time_key),
     end_time_key                   integer NOT NULL REFERENCES dw.dim_time(time_key),
     location_key                   bigint NOT NULL REFERENCES dw.dim_location(location_key),
+    county_location_key            bigint NOT NULL REFERENCES dw.dim_location(location_key),
     weather_condition_key          bigint NOT NULL REFERENCES dw.dim_weather_condition(weather_condition_key),
     road_condition_key             bigint NOT NULL REFERENCES dw.dim_road_condition(road_condition_key),
     severity_key                   integer NOT NULL REFERENCES dw.dim_severity(severity_key),
@@ -112,6 +113,9 @@ CREATE INDEX IF NOT EXISTS ix_fact_accident_end_time_key
 
 CREATE INDEX IF NOT EXISTS ix_fact_accident_location_key
     ON dw.fact_accident (location_key);
+
+CREATE INDEX IF NOT EXISTS ix_fact_accident_county_location_key
+    ON dw.fact_accident (county_location_key);
 
 CREATE INDEX IF NOT EXISTS ix_fact_accident_weather_condition_key
     ON dw.fact_accident (weather_condition_key);

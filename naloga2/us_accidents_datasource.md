@@ -89,6 +89,8 @@ Below is the complete source column list used in the original/official schema (4
 | SCD strategy | Type 2 for dimensions | Preserve historical versions of dimensional values and enable time-correct analysis. |
 | Time modeling | Single role-playing `dim_time`, hour grain | Supports both `Start_Time` and `End_Time` with separate FK columns and consistent hourly bucketing. |
 | Timestamp precision placement | Keep precise timestamps in fact, not in `dim_time` | Avoid redundant timestamp storage in time dimension while preserving exact event times. |
+| Cross-source time conformance | Air daily rows use same `dim_time` with hour `00` day anchor | Keeps one shared time dimension; cross-source analysis should use day-level keys/aggregation. |
+| Cross-source location conformance | Add county-level location FK in accidents fact | Enables direct county-level joins between accidents and air facts while preserving accident detail location. |
 | Fact grain | One row per source accident (`ID`) | Matches source event granularity and avoids accidental aggregation during load. |
 
 ### SCD Options Considered
@@ -115,6 +117,20 @@ Below is the complete source column list used in the original/official schema (4
 - `is_current = true` marks the latest active version for that business identifier.
 - New version process: close old row (`valid_to`, `is_current = false`) and insert new current row.
 - Note: `dim_time` is static (non-SCD / Type 0); Type 2 applies to the other dimensions.
+
+## Cross-Source Key Semantics (Essential)
+
+- Shared time key behavior:
+  - Air daily facts use the same `dim_time.time_key` format as accidents (`YYYYMMDDHH`).
+  - For air daily rows, `HH=00` is used as day anchor.
+  - This means cross-source day alignment can use the same shared `time_key` day bucket.
+- Shared location dimension behavior:
+  - `fact_accident.location_key` and `fact_accident.county_location_key` both reference `dw.dim_location(location_key)`.
+  - They intentionally reference **different rows** in many cases:
+    - `location_key`: detailed accident location row (street-level context).
+    - `county_location_key`: county-level conformed row used for joins with air facts.
+  - Cross-source join path uses county-level rows:
+    - `fact_accident.county_location_key = fact_air_quality_daily.location_key`.
 
 ## Source-to-Star Mapping (Detailed)
 
@@ -200,6 +216,7 @@ Below is the complete source column list used in the original/official schema (4
 | `start_time_key` | Logistical | `Start_Time` | FK to `dim_time.time_key` using hour bucket of start time. |
 | `end_time_key` | Logistical | `End_Time` | FK to `dim_time.time_key` using hour bucket of end time. |
 | `location_key` | Logistical | `Street`, `City`, `County`, `State`, `Zipcode`, `Country`, `Timezone` | FK resolved via SCD2 lookup on `dim_location`. |
+| `county_location_key` | Logistical | `County`, `State`, `Country` | FK to county-level row in shared `dim_location`; used for cross-source joins with air quality facts. |
 | `weather_condition_key` | Logistical | `Weather_Condition` | FK resolved via SCD2 lookup on `dim_weather_condition`. |
 | `road_condition_key` | Logistical | `Amenity`, `Bump`, `Crossing`, `Give_Way`, `Junction`, `No_Exit`, `Railway`, `Roundabout`, `Station`, `Stop`, `Traffic_Calming`, `Traffic_Signal`, `Turning_Loop` | FK resolved via SCD2 lookup on `dim_road_condition`. |
 | `severity_key` | Logistical | `Severity` | FK resolved via SCD2 lookup on `dim_severity` using `severity_level`. |
@@ -243,6 +260,7 @@ The following original quantitative fields are intentionally not loaded as fact 
 - Time is modeled as one shared dimension with two foreign keys (start/end role-playing).
 - Severity is treated as a conformed dimension with low cardinality.
 - Slowly changing dimensions use **Type 2** (history-preserving rows with validity ranges).
+- Cross-source joins with air quality should use county-level location keys and day-level time logic.
 
 ## Open Items Before Integrating Source 2
 - Source 2 planned: US EPA Air Quality Data (`aqs.epa.gov`) for later integration.
