@@ -1,97 +1,381 @@
 {
-  "schema_version": 1,
-  "note": "Initial analysis skeleton. Fields are expected to evolve as new metrics are discovered.",
-  "data_shape": {
-    "accidents": {
-      "source_mode": "single_file",
-      "files": [
-        "raw/archive/US_Accidents_March23.csv"
-      ]
-    },
-    "air": {
-      "source_mode": "yearly_files",
-      "file_pattern": "raw/daily_aqi_by_county_YYYY.csv",
-      "target_year_range": {
-        "start_year": 2016,
-        "end_year": 2023
-      },
-      "files": []
-    }
-  },
   "accidents": {
     "dimensions": {
-      "input_rows_total": null,
-      "dim_time": {
-        "min_timestamp": null,
-        "max_timestamp": null,
-        "distinct_time_keys_expected": null
-      },
-      "dim_severity": {
-        "distinct_valid_levels_expected": null,
-        "levels": []
-      },
-      "dim_weather_condition": {
-        "distinct_categories_expected": null,
-        "missing_weather_rows": null
+      "dim_location": {
+        "county_members_expected": 3114,
+        "detail_members_expected": 1118035,
+        "insufficient_location_rows": 0
       },
       "dim_road_condition": {
-        "distinct_combinations_expected": null
+        "distinct_combinations_expected": 344
       },
-      "dim_location": {
-        "detail_members_expected": null,
-        "county_members_expected": null,
-        "insufficient_location_rows": null
-      }
+      "dim_severity": {
+        "distinct_valid_levels_expected": 4,
+        "levels": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "dim_time": {
+        "distinct_time_keys_expected": 60669,
+        "max_timestamp": "2023-03-31 23:59:00",
+        "min_timestamp": "2016-01-14 20:18:33"
+      },
+      "dim_weather_condition": {
+        "distinct_categories_expected": 144,
+        "missing_weather_rows": 173459
+      },
+      "input_rows_total": 7728394
     },
     "facts": {
-      "source_rows_total": null,
-      "expected_stage_rows": null,
-      "expected_skip_rows": null,
-      "expected_unknown_mapped_rows": null,
+      "expected_skip_rows": 0,
+      "expected_stage_rows": 7728394,
+      "expected_unknown_mapped_rows": 173459,
       "skip_reasons": {
-        "missing_id": null,
-        "severity": null,
-        "time_parse": null,
-        "time_order": null,
-        "coords": null,
-        "location_detail": null,
-        "location_county": null
-      }
+        "coords": 0,
+        "location_county": 0,
+        "location_detail": 0,
+        "missing_id": 0,
+        "severity": 0,
+        "time_order": 0,
+        "time_parse": 0
+      },
+      "source_id_duplicate_rows": 0,
+      "source_rows_total": 7728394
     }
   },
   "air": {
     "dimensions": {
-      "files_detected": [],
-      "per_year": {},
       "all_years": {
-        "rows_total": null,
-        "county_nk_expected_distinct": null,
-        "aqi_category_nk_expected_distinct": null,
-        "defining_parameter_nk_expected_distinct": null,
-        "unknown_state_name_rows": null,
-        "top_unknown_state_names": []
+        "aqi_category_nk_expected_distinct": 6,
+        "county_nk_expected_distinct": 1077,
+        "defining_parameter_nk_expected_distinct": 5,
+        "rows_total": 2602953,
+        "top_unknown_state_names": [
+          {
+            "count": 3460,
+            "name": "Country Of Mexico"
+          }
+        ],
+        "unknown_state_name_rows": 3460
+      },
+      "files_detected": [
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2016.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2017.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2018.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2019.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2020.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2021.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2022.csv",
+        "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2023.csv"
+      ],
+      "per_year": {
+        "2016": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1029,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2016-12-31",
+          "min_source_date": "2016-01-01",
+          "rows_total": 321071,
+          "top_unknown_state_names": [
+            {
+              "count": 276,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 276
+        },
+        "2017": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1027,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2017-12-31",
+          "min_source_date": "2017-01-01",
+          "rows_total": 326801,
+          "top_unknown_state_names": [
+            {
+              "count": 570,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 570
+        },
+        "2018": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1019,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2018-12-31",
+          "min_source_date": "2018-01-01",
+          "rows_total": 327541,
+          "top_unknown_state_names": [
+            {
+              "count": 514,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 514
+        },
+        "2019": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1021,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2019-12-31",
+          "min_source_date": "2019-01-01",
+          "rows_total": 326044,
+          "top_unknown_state_names": [
+            {
+              "count": 390,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 390
+        },
+        "2020": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1004,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2020-12-31",
+          "min_source_date": "2020-01-01",
+          "rows_total": 325138,
+          "top_unknown_state_names": [
+            {
+              "count": 238,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 238
+        },
+        "2021": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1003,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2021-12-31",
+          "min_source_date": "2021-01-01",
+          "rows_total": 326540,
+          "top_unknown_state_names": [
+            {
+              "count": 470,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 470
+        },
+        "2022": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 1001,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2022-12-31",
+          "min_source_date": "2022-01-01",
+          "rows_total": 324419,
+          "top_unknown_state_names": [
+            {
+              "count": 638,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 638
+        },
+        "2023": {
+          "aqi_category_nk_expected_distinct": 6,
+          "county_nk_expected_distinct": 991,
+          "defining_parameter_nk_expected_distinct": 5,
+          "max_source_date": "2023-12-31",
+          "min_source_date": "2023-01-01",
+          "rows_total": 325399,
+          "top_unknown_state_names": [
+            {
+              "count": 364,
+              "name": "Country Of Mexico"
+            }
+          ],
+          "unknown_state_name_rows": 364
+        }
       }
     },
     "facts": {
-      "per_year": {},
       "all_years": {
-        "rows_scanned_total": null,
-        "expected_stage_rows_total": null,
-        "expected_skip_rows_total": null,
-        "expected_min_source_date": null,
-        "expected_max_source_date": null,
+        "expected_max_source_date": "2023-12-31",
+        "expected_min_source_date": "2016-01-01",
+        "expected_skip_rows_total": 3460,
+        "expected_stage_rows_total": 2599493,
+        "rows_scanned_total": 2602953,
         "skip_reasons_total": {
-          "missing_state_code": null,
-          "missing_county_code": null,
-          "missing_date": null,
-          "invalid_date": null,
-          "missing_county_name": null,
-          "unknown_state_name": null,
-          "invalid_aqi": null,
-          "invalid_sites_reporting": null,
-          "missing_category_mapped_unknown": null,
-          "missing_defining_parameter_mapped_unknown": null
+          "invalid_aqi": 0,
+          "invalid_date": 0,
+          "invalid_sites_reporting": 0,
+          "missing_category_mapped_unknown": 0,
+          "missing_county_code": 0,
+          "missing_county_name": 0,
+          "missing_date": 0,
+          "missing_defining_parameter_mapped_unknown": 0,
+          "missing_state_code": 0,
+          "unknown_state_name": 3460
         }
+      },
+      "per_year": {
+        "2016": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 276,
+          "expected_stage_rows": 320795,
+          "rows_scanned": 321071,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 276
+          }
+        },
+        "2017": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 570,
+          "expected_stage_rows": 326231,
+          "rows_scanned": 326801,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 570
+          }
+        },
+        "2018": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 514,
+          "expected_stage_rows": 327027,
+          "rows_scanned": 327541,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 514
+          }
+        },
+        "2019": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 390,
+          "expected_stage_rows": 325654,
+          "rows_scanned": 326044,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 390
+          }
+        },
+        "2020": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 238,
+          "expected_stage_rows": 324900,
+          "rows_scanned": 325138,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 238
+          }
+        },
+        "2021": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 470,
+          "expected_stage_rows": 326070,
+          "rows_scanned": 326540,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 470
+          }
+        },
+        "2022": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 638,
+          "expected_stage_rows": 323781,
+          "rows_scanned": 324419,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 638
+          }
+        },
+        "2023": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 364,
+          "expected_stage_rows": 325035,
+          "rows_scanned": 325399,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 364
+          }
+        }
+      }
+    }
+  },
+  "data_shape": {
+    "accidents": {
+      "files": [
+        "raw/archive/US_Accidents_March23.csv"
+      ],
+      "source_mode": "single_file"
+    },
+    "air": {
+      "file_pattern": "raw/daily_aqi_by_county_YYYY.csv",
+      "files": [],
+      "source_mode": "yearly_files",
+      "target_year_range": {
+        "end_year": 2023,
+        "start_year": 2016
       }
     }
   },
@@ -104,5 +388,7 @@
       "dimensions": {},
       "facts": {}
     }
-  }
+  },
+  "note": "Initial analysis skeleton. Fields are expected to evolve as new metrics are discovered.",
+  "schema_version": 1
 }
