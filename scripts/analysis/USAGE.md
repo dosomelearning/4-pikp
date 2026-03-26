@@ -97,10 +97,67 @@ AIR_END_YEAR=2023 \
 ./scripts/analysis/run-data-shape-analysis.sh
 ```
 
+## 5) Run Validation (DB vs Analysis)
+
+Validate database state against `docs/analysis.json` expectations.
+
+Default:
+
+```bash
+./scripts/analysis/validate-db-vs-analysis.sh
+```
+
+Show per-check validation lines in console:
+
+```bash
+SHOW_CHECKED=all ./scripts/analysis/validate-db-vs-analysis.sh
+```
+
+Syntax:
+
+```bash
+SHOW_CHECKED=<none|all|compliant|non_compliant> ./scripts/analysis/validate-db-vs-analysis.sh
+```
+
+Examples:
+
+```bash
+# summary only (default behavior)
+SHOW_CHECKED=none ./scripts/analysis/validate-db-vs-analysis.sh
+
+# print every checked validation path
+SHOW_CHECKED=all ./scripts/analysis/validate-db-vs-analysis.sh
+
+# print only checks that passed
+SHOW_CHECKED=compliant ./scripts/analysis/validate-db-vs-analysis.sh
+
+# print only checks that failed
+SHOW_CHECKED=non_compliant ./scripts/analysis/validate-db-vs-analysis.sh
+```
+
+Direct command (equivalent):
+
+```bash
+python ./scripts/analysis/analysis_metrics.py validate-db \
+  --analysis-json ./docs/analysis.json \
+  --output-json ./docs/analysis_validation.json \
+  --show-checked all
+```
+
+Validation status semantics:
+- `compliant`: all checked values match expected analysis values.
+- `non_compliant`: at least one checked value differs from expected.
+
+Containment semantics for conformed location sets:
+- For shared county-NK set checks, validation asserts `expected ⊆ actual`.
+- Extra members in DB are allowed and shown in `_difference_samples`.
+
 ## Output Targets
 
 - Main metrics artifact:
   - `docs/analysis.json`
+- Validation artifact:
+  - `docs/analysis_validation.json`
 - Run-all logs:
   - `docs/logs/analysis_all_YYYYMMDD_HHMMSS.log`
 
@@ -109,6 +166,11 @@ AIR_END_YEAR=2023 \
 - Scripts are non-interactive; they emit periodic progress and final summaries to console.
 - Yearly air files are expected as:
   - `raw/daily_aqi_by_county_YYYY.csv`
+- Analysis rules live in:
+  - `scripts/analysis/rules.json`
+  - current usage:
+    - `air.state_name_to_abbrev` for ETL-parity county NK construction in air analysis.
+    - `air.exclude_state_names` for conformance exclusions and per-year/all-years exclusion counts.
 
 ## Reset Analysis JSON (Clear to Placeholders)
 

@@ -125,7 +125,10 @@ This is an iterative document and may be refined across multiple cycles.
   - file presence for `2016..2023`
   - per-file row counts and date ranges
 - `dim_location` (county-level conformed members):
-  - discovered `state_name -> state_code` mapping and ambiguity profile
+  - rules-driven `state_name -> state_abbrev` mapping (`scripts/analysis/rules.json`) for ETL-parity county NK construction
+  - discovered `state_name -> state_code` profile from raw (`State Code`) for observability/ambiguity diagnostics
+  - rules-driven excluded state-name list (from `scripts/analysis/rules.json`)
+  - excluded-state row counts per year and all-years (raw evidence for ETL conformance deltas)
   - explicit time-granularity metadata for air daily mapping (`daily -> HH=00`)
   - expected distinct `HH=00` time keys across per-year/all-years files
   - expected `HH=00` overlap with accidents window

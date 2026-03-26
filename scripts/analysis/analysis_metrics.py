@@ -112,6 +112,7 @@ def write_analysis(path, data):
 
 
 AIR_FILE_RE = re.compile(r"^daily_aqi_by_county_(\d{4})\.csv$")
+DEFAULT_RULES_PATH = Path(__file__).resolve().parent / "rules.json"
 
 
 def scan_csv_shape(csv_path):
@@ -171,6 +172,38 @@ def analyze_data_shape(accidents_csv, raw_dir, start_year, end_year):
         "files": files,
     }
     return {"accidents": accidents, "air": air}
+
+
+def load_rules(rules_json_path=None):
+    path = Path(rules_json_path) if rules_json_path else DEFAULT_RULES_PATH
+    rules = {"air": {"exclude_state_names": [], "state_name_to_abbrev": {}}}
+    if path.exists():
+        with path.open("r", encoding="utf-8") as f:
+            loaded = json.load(f)
+        if isinstance(loaded, dict):
+            rules.update(loaded)
+    raw_names = rules.get("air", {}).get("exclude_state_names", [])
+    raw_map = rules.get("air", {}).get("state_name_to_abbrev", {})
+    normalized = []
+    for name in raw_names:
+        c = canon(name)
+        if c is not None:
+            normalized.append(c.lower())
+    normalized_map = {}
+    if isinstance(raw_map, dict):
+        for k, v in raw_map.items():
+            ck = canon(k)
+            cv = canon(v)
+            if ck is None or cv is None:
+                continue
+            normalized_map[ck.lower()] = cv.upper()
+    return {
+        "path": str(path.resolve()),
+        "air": {
+            "exclude_state_names": sorted(set(normalized)),
+            "state_name_to_abbrev": normalized_map,
+        },
+    }
 
 
 def hour_key(ts):
@@ -565,7 +598,7 @@ def analyze_accidents(raw_csv, road_flag_cols, road_flag_true_tokens, progress_e
     return metrics
 
 
-def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
+def analyze_air_file(raw_csv, state_name_to_abbrev, excluded_state_names, progress_every, top_issues):
     rows = 0
     min_date = None
     max_date = None
@@ -575,6 +608,7 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
     aqi_nk = set()
     param_nk = set()
     unknown_state_counter = Counter()
+    excluded_state_counter = Counter()
     rows_with_county_key_buildable = 0
     rows_with_county_key_unbuildable = 0
     county_unbuildable_reason_counts = Counter()
@@ -587,6 +621,7 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
         "invalid_date": 0,
         "missing_county_name": 0,
         "unknown_state_name": 0,
+        "excluded_state_name_rule": 0,
         "invalid_aqi": 0,
         "invalid_sites_reporting": 0,
         "missing_category_mapped_unknown": 0,
@@ -630,8 +665,12 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
 
             county_name = canon(get_field(row, ["county Name", "County Name", "county_name"]))
             state_name = canon(get_field(row, ["State Name", "state_name"]))
-            state_abbrev = state_name_to_code.get(state_name.lower()) if state_name else None
-            if county_name is not None and state_abbrev is not None:
+            state_name_key = state_name.lower() if state_name else None
+            excluded_by_rule = state_name_key in excluded_state_names if state_name_key else False
+            if excluded_by_rule:
+                excluded_state_counter[state_name or "<NULL>"] += 1
+            state_abbrev = state_name_to_abbrev.get(state_name_key) if state_name else None
+            if county_name is not None and state_abbrev is not None and not excluded_by_rule:
                 county_nk.add("C|" + "|".join([county_name, state_abbrev, "US"]))
                 rows_with_county_key_buildable += 1
             else:
@@ -640,9 +679,11 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
                     county_unbuildable_reason_counts["missing_county_name"] += 1
                 if state_name is None:
                     county_unbuildable_reason_counts["missing_state_name"] += 1
+                if excluded_by_rule:
+                    county_unbuildable_reason_counts["excluded_state_name_rule"] += 1
                 elif state_abbrev is None:
                     county_unbuildable_reason_counts["unknown_state_name_mapping"] += 1
-                if state_abbrev is None:
+                if state_abbrev is None and not excluded_by_rule:
                     unknown_state_counter[state_name or "<NULL>"] += 1
 
             # Fact-logic checks
@@ -662,6 +703,9 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
                 continue
             if county_name is None:
                 skip_reason["missing_county_name"] += 1
+                continue
+            if excluded_by_rule:
+                skip_reason["excluded_state_name_rule"] += 1
                 continue
             if state_abbrev is None:
                 skip_reason["unknown_state_name"] += 1
@@ -700,6 +744,7 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
         + skip_reason["missing_date"]
         + skip_reason["invalid_date"]
         + skip_reason["missing_county_name"]
+        + skip_reason["excluded_state_name_rule"]
         + skip_reason["unknown_state_name"]
         + skip_reason["invalid_aqi"]
         + skip_reason["invalid_sites_reporting"]
@@ -715,6 +760,8 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
         "defining_parameter_nk_expected_distinct": len(param_nk),
         "unknown_state_name_rows": sum(unknown_state_counter.values()),
         "top_unknown_state_names": format_top(unknown_state_counter, top_issues),
+        "excluded_state_name_rows": sum(excluded_state_counter.values()),
+        "top_excluded_state_names": format_top(excluded_state_counter, top_issues),
         "dim_time": {
             "granularity": "hour",
             "time_key_format": "YYYYMMDDHH",
@@ -726,9 +773,10 @@ def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
         "dim_location_model": {
             "levels": ["county"],
             "county_nk_pattern": "C|county|state|country",
-            "state_source": "State Name -> discovered state_name_to_code",
+            "state_source": "State Name -> rules.air.state_name_to_abbrev",
             "country_fixed": "US",
             "fact_usage": ["location_key(county)"],
+            "county_nk_members": sorted(county_nk),
             "rows_with_county_key_buildable": rows_with_county_key_buildable,
             "rows_with_county_key_unbuildable": rows_with_county_key_unbuildable,
             "unbuildable_reason_counts": dict(county_unbuildable_reason_counts),
@@ -761,6 +809,7 @@ def aggregate_air(per_year):
     min_date = None
     max_date = None
     top_unknown = Counter()
+    top_excluded = Counter()
     skip_reasons_total = defaultdict(int)
     loc_rows_buildable = 0
     loc_rows_unbuildable = 0
@@ -783,6 +832,8 @@ def aggregate_air(per_year):
 
         for item in metrics.get("top_unknown_state_names", []):
             top_unknown[item["name"]] += item["count"]
+        for item in metrics.get("top_excluded_state_names", []):
+            top_excluded[item["name"]] += item["count"]
         for k, v in metrics["facts"]["skip_reasons"].items():
             skip_reasons_total[k] += v
         loc_model = metrics.get("dim_location_model", {})
@@ -805,13 +856,15 @@ def aggregate_air(per_year):
         "aqi_category_nk_expected_distinct": None,
         "defining_parameter_nk_expected_distinct": None,
         "unknown_state_name_rows": skip_reasons_total.get("unknown_state_name", 0),
+        "excluded_state_name_rows": skip_reasons_total.get("excluded_state_name_rule", 0),
+        "top_excluded_state_names": format_top(top_excluded, 10),
         "location_rows_with_county_key_buildable": loc_rows_buildable,
         "location_rows_with_county_key_unbuildable": loc_rows_unbuildable,
         "location_unbuildable_reason_counts": dict(loc_unbuildable_reasons),
     }
 
 
-def analyze_air_all(raw_dir, start_year, end_year, state_name_to_code, progress_every, top_issues):
+def analyze_air_all(raw_dir, start_year, end_year, state_name_to_abbrev, excluded_state_names, progress_every, top_issues):
     per_year = {}
     files_detected = []
 
@@ -826,7 +879,7 @@ def analyze_air_all(raw_dir, start_year, end_year, state_name_to_code, progress_
             continue
         files_detected.append(str(csv_path))
         y = str(year)
-        m = analyze_air_file(str(csv_path), state_name_to_code, progress_every, top_issues)
+        m = analyze_air_file(str(csv_path), state_name_to_abbrev, excluded_state_names, progress_every, top_issues)
         per_year[y] = m
 
         # recompute sets for global distinct counts from yearly metrics by rescanning lightweight values
@@ -836,8 +889,8 @@ def analyze_air_all(raw_dir, start_year, end_year, state_name_to_code, progress_
             for row in reader:
                 county_name = canon(get_field(row, ["county Name", "County Name", "county_name"]))
                 state_name = canon(get_field(row, ["State Name", "state_name"]))
-                state_abbrev = state_name_to_code.get(state_name.lower()) if state_name else None
-                if county_name is not None and state_abbrev is not None:
+                state_abbrev = state_name_to_abbrev.get(state_name.lower()) if state_name else None
+                if county_name is not None and state_abbrev is not None and state_name and state_name.lower() not in excluded_state_names:
                     all_county.add("C|" + "|".join([county_name, state_abbrev, "US"]))
 
                 category_name = canon(row.get("Category"))
@@ -886,121 +939,300 @@ def run_sql(sql):
     return [line.strip().split("\t") for line in out.strip().splitlines() if line.strip()]
 
 
-def validate_against_db(analysis):
-    results = {"checks": []}
+def set_path_value(tree, path, value):
+    cur = tree
+    for key in path[:-1]:
+        if key not in cur or not isinstance(cur[key], dict):
+            cur[key] = {}
+        cur = cur[key]
+    cur[path[-1]] = value
 
-    # accidents fact count
-    db_acc_rows = int(run_sql("SELECT COUNT(*) FROM dw.fact_accident;")[0][0])
-    exp_acc_rows = analysis["accidents"]["facts"]["expected_stage_rows"]
-    results["checks"].append({
-        "name": "accidents.fact_rows",
-        "expected": exp_acc_rows,
-        "actual": db_acc_rows,
-        "status": "pass" if exp_acc_rows == db_acc_rows else "fail",
-    })
 
-    # air fact count + range
-    db_air = run_sql(
-        "SELECT COUNT(*), MIN(source_date)::text, MAX(source_date)::text FROM dw.fact_air_quality_daily;"
-    )[0]
-    db_air_rows = int(db_air[0])
-    db_air_min = db_air[1]
-    db_air_max = db_air[2]
-    exp_air_rows = analysis["air"]["facts"]["all_years"]["expected_stage_rows_total"]
-    exp_air_min = analysis["air"]["facts"]["all_years"]["expected_min_source_date"]
-    exp_air_max = analysis["air"]["facts"]["all_years"]["expected_max_source_date"]
-    results["checks"].append({
-        "name": "air.fact_rows",
-        "expected": exp_air_rows,
-        "actual": db_air_rows,
-        "status": "pass" if exp_air_rows == db_air_rows else "fail",
+def check_value(validation_tree, summary, failures, checked, path, expected, actual):
+    path_str = ".".join(str(p) for p in path)
+    summary["checked"] += 1
+    if expected == actual:
+        summary["compliant"] += 1
+        set_path_value(validation_tree, path, "compliant")
+        checked.append({
+            "path": path_str,
+            "status": "compliant",
+            "expected": expected,
+            "actual": actual,
+        })
+        return
+    summary["non_compliant"] += 1
+    set_path_value(validation_tree, path, actual)
+    checked.append({
+        "path": path_str,
+        "status": "non_compliant",
+        "expected": expected,
+        "actual": actual,
     })
-    results["checks"].append({
-        "name": "air.fact_min_source_date",
-        "expected": exp_air_min,
-        "actual": db_air_min,
-        "status": "pass" if exp_air_min == db_air_min else "fail",
-    })
-    results["checks"].append({
-        "name": "air.fact_max_source_date",
-        "expected": exp_air_max,
-        "actual": db_air_max,
-        "status": "pass" if exp_air_max == db_air_max else "fail",
+    failures.append({
+        "path": path_str,
+        "expected": expected,
+        "actual": actual,
     })
 
-    # air fact time-key coverage
-    db_air_time = run_sql(
-        "SELECT COUNT(DISTINCT time_key), MIN(time_key)::text, MAX(time_key)::text FROM dw.fact_air_quality_daily;"
-    )[0]
-    db_air_time_distinct = int(db_air_time[0])
-    db_air_time_min = int(db_air_time[1]) if db_air_time[1] else None
-    db_air_time_max = int(db_air_time[2]) if db_air_time[2] else None
 
-    exp_air_time = analysis["air"]["dimensions"].get("dim_time", {})
-    exp_air_time_distinct = exp_air_time.get("expected_rows_distinct_hour_keys")
-    exp_air_time_min = exp_air_time.get("expected_min_time_key")
-    exp_air_time_max = exp_air_time.get("expected_max_time_key")
-
-    results["checks"].append({
-        "name": "air.fact_distinct_time_keys",
-        "expected": exp_air_time_distinct,
-        "actual": db_air_time_distinct,
-        "status": "pass" if exp_air_time_distinct == db_air_time_distinct else "fail",
-    })
-    results["checks"].append({
-        "name": "air.fact_min_time_key",
-        "expected": exp_air_time_min,
-        "actual": db_air_time_min,
-        "status": "pass" if exp_air_time_min == db_air_time_min else "fail",
-    })
-    results["checks"].append({
-        "name": "air.fact_max_time_key",
-        "expected": exp_air_time_max,
-        "actual": db_air_time_max,
-        "status": "pass" if exp_air_time_max == db_air_time_max else "fail",
-    })
-
-    # air county-location coverage (fact -> dim_location NKs)
-    db_air_county_nk_distinct = int(
-        run_sql(
-            "SELECT COUNT(DISTINCT dl.location_nk) "
-            "FROM dw.fact_air_quality_daily f "
-            "JOIN dw.dim_location dl ON dl.location_key = f.location_key;"
-        )[0][0]
-    )
-    exp_air_county_nk_distinct = analysis["air"]["dimensions"]["all_years"]["county_nk_expected_distinct"]
-    results["checks"].append({
-        "name": "air.fact_distinct_county_location_nk",
-        "expected": exp_air_county_nk_distinct,
-        "actual": db_air_county_nk_distinct,
-        "status": "pass" if exp_air_county_nk_distinct == db_air_county_nk_distinct else "fail",
-    })
-
-    # dimension current counts for new air dims
-    db_aqi_dim = int(run_sql("SELECT COUNT(*) FROM dw.dim_aqi_category WHERE is_current=TRUE;")[0][0])
-    db_param_dim = int(run_sql("SELECT COUNT(*) FROM dw.dim_defining_parameter WHERE is_current=TRUE;")[0][0])
-    exp_aqi_dim = analysis["air"]["dimensions"]["all_years"]["aqi_category_nk_expected_distinct"] + 1
-    exp_param_dim = analysis["air"]["dimensions"]["all_years"]["defining_parameter_nk_expected_distinct"] + 1
-    results["checks"].append({
-        "name": "air.dim_aqi_category_current_rows",
-        "expected": exp_aqi_dim,
-        "actual": db_aqi_dim,
-        "status": "pass" if exp_aqi_dim == db_aqi_dim else "fail",
-    })
-    results["checks"].append({
-        "name": "air.dim_defining_parameter_current_rows",
-        "expected": exp_param_dim,
-        "actual": db_param_dim,
-        "status": "pass" if exp_param_dim == db_param_dim else "fail",
-    })
-
-    fail_count = sum(1 for c in results["checks"] if c["status"] == "fail")
-    results["summary"] = {
-        "total_checks": len(results["checks"]),
-        "failed_checks": fail_count,
-        "status": "pass" if fail_count == 0 else "fail",
+def add_set_diff_sample(container, name, expected_set, actual_set, limit=25):
+    expected_only = sorted(expected_set - actual_set)
+    actual_only = sorted(actual_set - expected_set)
+    container[name] = {
+        "expected_only_count": len(expected_only),
+        "actual_only_count": len(actual_only),
+        "expected_only_sample": expected_only[:limit],
+        "actual_only_sample": actual_only[:limit],
     }
-    return results
+
+
+def check_containment(validation_tree, summary, failures, checked, path, expected_set, actual_set, sample_limit=25):
+    path_str = ".".join(str(p) for p in path)
+    summary["checked"] += 1
+    missing = sorted(expected_set - actual_set)
+    if not missing:
+        summary["compliant"] += 1
+        set_path_value(validation_tree, path, "compliant")
+        checked.append({
+            "path": path_str,
+            "status": "compliant",
+            "expected": f"contained({len(expected_set)})",
+            "actual": f"contained({len(expected_set)})",
+        })
+        return
+    summary["non_compliant"] += 1
+    set_path_value(validation_tree, path, {
+        "missing_expected_count": len(missing),
+        "missing_expected_sample": missing[:sample_limit],
+    })
+    checked.append({
+        "path": path_str,
+        "status": "non_compliant",
+        "expected": f"contained({len(expected_set)})",
+        "actual": f"missing_expected({len(missing)})",
+    })
+    failures.append({
+        "path": path_str,
+        "expected": f"contained({len(expected_set)})",
+        "actual": f"missing_expected({len(missing)})",
+    })
+
+
+def validate_against_db(analysis):
+    validation = {}
+    summary = {"checked": 0, "compliant": 0, "non_compliant": 0}
+    failures = []
+    checked = []
+    diff_samples = {}
+
+    # accidents: fact + dimensions that map to DB state
+    acc_rows = int(run_sql("SELECT COUNT(*) FROM dw.fact_accident;")[0][0])
+    check_value(validation, summary, failures, checked, ["accidents", "facts", "expected_stage_rows"],
+                analysis["accidents"]["facts"]["expected_stage_rows"], acc_rows)
+
+    acc_weather_unknown = int(run_sql(
+        "SELECT COUNT(*) "
+        "FROM dw.fact_accident f "
+        "JOIN dw.dim_weather_condition w ON w.weather_condition_key = f.weather_condition_key "
+        "WHERE w.weather_condition_nk = 'unknown';"
+    )[0][0])
+    check_value(validation, summary, failures, checked, ["accidents", "facts", "expected_unknown_mapped_rows"],
+                analysis["accidents"]["facts"]["expected_unknown_mapped_rows"], acc_weather_unknown)
+
+    acc_sev_levels_rows = run_sql(
+        "SELECT COALESCE(string_agg(severity_level::text, ',' ORDER BY severity_level), '') "
+        "FROM dw.dim_severity WHERE is_current=TRUE;"
+    )[0][0]
+    acc_sev_levels = [int(x) for x in acc_sev_levels_rows.split(",") if x]
+    check_value(validation, summary, failures, checked, ["accidents", "dimensions", "dim_severity", "levels"],
+                analysis["accidents"]["dimensions"]["dim_severity"]["levels"], acc_sev_levels)
+    check_value(validation, summary, failures, checked, ["accidents", "dimensions", "dim_severity", "distinct_valid_levels_expected"],
+                analysis["accidents"]["dimensions"]["dim_severity"]["distinct_valid_levels_expected"], len(acc_sev_levels))
+
+    acc_road_dim = int(run_sql("SELECT COUNT(*) FROM dw.dim_road_condition WHERE is_current=TRUE;")[0][0])
+    check_value(validation, summary, failures, checked, ["accidents", "dimensions", "dim_road_condition", "distinct_combinations_expected"],
+                analysis["accidents"]["dimensions"]["dim_road_condition"]["distinct_combinations_expected"], acc_road_dim)
+
+    acc_weather_dim_non_unknown = int(run_sql(
+        "SELECT COUNT(*) FROM dw.dim_weather_condition "
+        "WHERE is_current=TRUE AND weather_condition_nk <> 'unknown';"
+    )[0][0])
+    check_value(validation, summary, failures, checked, ["accidents", "dimensions", "dim_weather_condition", "distinct_categories_expected"],
+                analysis["accidents"]["dimensions"]["dim_weather_condition"]["distinct_categories_expected"],
+                acc_weather_dim_non_unknown)
+
+    acc_loc_detail = int(run_sql("SELECT COUNT(*) FROM dw.dim_location WHERE is_current=TRUE AND location_nk LIKE 'D|%';")[0][0])
+    check_value(validation, summary, failures, checked, ["accidents", "dimensions", "dim_location", "detail_members_expected"],
+                analysis["accidents"]["dimensions"]["dim_location"]["detail_members_expected"], acc_loc_detail)
+    expected_acc_county = set(
+        analysis.get("accidents", {})
+        .get("dimensions", {})
+        .get("dim_location_model", {})
+        .get("county_nk_members", [])
+    )
+    actual_acc_county = {
+        r[0] for r in run_sql(
+            "SELECT location_nk FROM dw.dim_location "
+            "WHERE is_current=TRUE AND location_nk LIKE 'C|%' ORDER BY 1;"
+        )
+    }
+    add_set_diff_sample(diff_samples, "accidents.county_nk", expected_acc_county, actual_acc_county)
+    check_containment(validation, summary, failures, checked,
+                      ["accidents", "dimensions", "dim_location_model", "county_nk_members"],
+                      expected_acc_county, actual_acc_county)
+
+    # air: fact + dimensions that map to DB state
+    air_fact = run_sql(
+        "SELECT COUNT(*), MIN(source_date)::text, MAX(source_date)::text "
+        "FROM dw.fact_air_quality_daily;"
+    )[0]
+    check_value(validation, summary, failures, checked, ["air", "facts", "all_years", "expected_stage_rows_total"],
+                analysis["air"]["facts"]["all_years"]["expected_stage_rows_total"], int(air_fact[0]))
+    check_value(validation, summary, failures, checked, ["air", "facts", "all_years", "expected_min_source_date"],
+                analysis["air"]["facts"]["all_years"]["expected_min_source_date"], air_fact[1])
+    check_value(validation, summary, failures, checked, ["air", "facts", "all_years", "expected_max_source_date"],
+                analysis["air"]["facts"]["all_years"]["expected_max_source_date"], air_fact[2])
+
+    air_time = run_sql(
+        "SELECT COUNT(DISTINCT time_key), MIN(time_key)::text, MAX(time_key)::text "
+        "FROM dw.fact_air_quality_daily;"
+    )[0]
+    check_value(validation, summary, failures, checked, ["air", "dimensions", "dim_time", "expected_rows_distinct_hour_keys"],
+                analysis["air"]["dimensions"]["dim_time"]["expected_rows_distinct_hour_keys"], int(air_time[0]))
+    check_value(validation, summary, failures, checked, ["air", "dimensions", "dim_time", "expected_min_time_key"],
+                analysis["air"]["dimensions"]["dim_time"]["expected_min_time_key"],
+                int(air_time[1]) if air_time[1] else None)
+    check_value(validation, summary, failures, checked, ["air", "dimensions", "dim_time", "expected_max_time_key"],
+                analysis["air"]["dimensions"]["dim_time"]["expected_max_time_key"],
+                int(air_time[2]) if air_time[2] else None)
+
+    expected_air_county = set(
+        analysis.get("air", {})
+        .get("dimensions", {})
+        .get("dim_location_model", {})
+        .get("county_nk_members", [])
+    )
+    actual_air_county = {
+        r[0] for r in run_sql(
+            "SELECT DISTINCT dl.location_nk "
+            "FROM dw.fact_air_quality_daily f "
+            "JOIN dw.dim_location dl ON dl.location_key = f.location_key "
+            "ORDER BY 1;"
+        )
+    }
+    add_set_diff_sample(diff_samples, "air.county_nk_all_years", expected_air_county, actual_air_county)
+    check_containment(validation, summary, failures, checked,
+                      ["air", "dimensions", "dim_location_model", "county_nk_members"],
+                      expected_air_county, actual_air_county)
+
+    aqi_dim_non_unknown = int(run_sql(
+        "SELECT COUNT(*) FROM dw.dim_aqi_category WHERE is_current=TRUE AND aqi_category_nk <> 'unknown';"
+    )[0][0])
+    check_value(validation, summary, failures, checked, ["air", "dimensions", "all_years", "aqi_category_nk_expected_distinct"],
+                analysis["air"]["dimensions"]["all_years"]["aqi_category_nk_expected_distinct"], aqi_dim_non_unknown)
+
+    param_dim_non_unknown = int(run_sql(
+        "SELECT COUNT(*) FROM dw.dim_defining_parameter WHERE is_current=TRUE AND defining_parameter_nk <> 'unknown';"
+    )[0][0])
+    check_value(validation, summary, failures, checked, ["air", "dimensions", "all_years", "defining_parameter_nk_expected_distinct"],
+                analysis["air"]["dimensions"]["all_years"]["defining_parameter_nk_expected_distinct"], param_dim_non_unknown)
+
+    # air per-year DB checks
+    year_rows = run_sql(
+        "SELECT EXTRACT(YEAR FROM source_date)::int AS y, "
+        "COUNT(*)::bigint AS rows_cnt, "
+        "MIN(source_date)::text AS min_d, "
+        "MAX(source_date)::text AS max_d, "
+        "COUNT(DISTINCT time_key)::bigint AS distinct_time_keys, "
+        "COUNT(DISTINCT dl.location_nk)::bigint AS distinct_county_nk "
+        "FROM dw.fact_air_quality_daily f "
+        "JOIN dw.dim_location dl ON dl.location_key = f.location_key "
+        "GROUP BY 1 ORDER BY 1;"
+    )
+    by_year = {}
+    for y, rows_cnt, min_d, max_d, dtk, dnk in year_rows:
+        by_year[str(int(y))] = {
+            "rows": int(rows_cnt),
+            "min_d": min_d,
+            "max_d": max_d,
+            "distinct_time_keys": int(dtk),
+            "distinct_county_nk": int(dnk),
+        }
+    year_county_rows = run_sql(
+        "SELECT EXTRACT(YEAR FROM source_date)::int AS y, dl.location_nk "
+        "FROM dw.fact_air_quality_daily f "
+        "JOIN dw.dim_location dl ON dl.location_key = f.location_key "
+        "GROUP BY 1,2 ORDER BY 1,2;"
+    )
+    by_year_county_set = defaultdict(set)
+    for y, nk in year_county_rows:
+        by_year_county_set[str(int(y))].add(nk)
+    for year, expected in analysis["air"]["dimensions"]["per_year"].items():
+        actual = by_year.get(year)
+        if not actual:
+            check_value(validation, summary, failures, checked, ["air", "dimensions", "per_year", year, "rows_total"],
+                        expected["rows_total"], None)
+            continue
+        check_value(validation, summary, failures, checked, ["air", "facts", "per_year", year, "expected_stage_rows"],
+                    analysis["air"]["facts"]["per_year"][year]["expected_stage_rows"], actual["rows"])
+        check_value(validation, summary, failures, checked, ["air", "dimensions", "per_year", year, "min_source_date"],
+                    expected["min_source_date"], actual["min_d"])
+        check_value(validation, summary, failures, checked, ["air", "dimensions", "per_year", year, "max_source_date"],
+                    expected["max_source_date"], actual["max_d"])
+        check_value(validation, summary, failures, checked, ["air", "dimensions", "per_year", year, "dim_time", "expected_rows_distinct_hour_keys"],
+                    expected["dim_time"]["expected_rows_distinct_hour_keys"], actual["distinct_time_keys"])
+        expected_year_county = set(
+            expected.get("dim_location_model", {}).get("county_nk_members", [])
+        )
+        actual_year_county = by_year_county_set.get(year, set())
+        add_set_diff_sample(diff_samples, f"air.county_nk_per_year.{year}", expected_year_county, actual_year_county)
+        check_containment(validation, summary, failures, checked,
+                          ["air", "dimensions", "per_year", year, "dim_location_model", "county_nk_members"],
+                          expected_year_county, actual_year_county)
+
+    # overlap checks from DB-derived sets
+    air_county_set = actual_air_county
+    acc_county_set_rows = run_sql(
+        "SELECT DISTINCT dl.location_nk "
+        "FROM dw.fact_accident f "
+        "JOIN dw.dim_location dl ON dl.location_key = f.county_location_key "
+        "ORDER BY 1;"
+    )
+    acc_county_set = {r[0] for r in acc_county_set_rows}
+    overlap_set = air_county_set & acc_county_set
+    add_set_diff_sample(diff_samples, "air_vs_accidents.county_nk_overlap_basis", air_county_set, acc_county_set)
+
+    # data_shape environment checks
+    root = Path(__file__).resolve().parents[2]
+    default_acc = root / "raw/archive/US_Accidents_March23.csv"
+    expected_ds = analysis.get("data_shape", {})
+    exp_acc_files = expected_ds.get("accidents", {}).get("files", [])
+    acc_csv = exp_acc_files[0]["path"] if exp_acc_files else str(default_acc)
+    exp_air = expected_ds.get("air", {})
+    exp_air_files = exp_air.get("files", [])
+    raw_dir = str(Path(exp_air_files[0]["path"]).parent) if exp_air_files else str(root / "raw")
+    yr = exp_air.get("target_year_range", {})
+    start_year = yr.get("start_year", 2016) or 2016
+    end_year = yr.get("end_year", 2023) or 2023
+    ds_actual = analyze_data_shape(acc_csv, raw_dir, start_year, end_year)
+
+    for section in ("accidents", "air"):
+        for k, expected in expected_ds.get(section, {}).items():
+            actual = ds_actual.get(section, {}).get(k)
+            check_value(validation, summary, failures, checked, ["data_shape", section, k], expected, actual)
+
+    overall = "compliant" if summary["non_compliant"] == 0 else "non_compliant"
+    validation["_summary"] = {
+        "checked": summary["checked"],
+        "compliant": summary["compliant"],
+        "non_compliant": summary["non_compliant"],
+        "status": overall,
+    }
+    validation["_checked_details"] = checked
+    validation["_non_compliant_details"] = failures
+    validation["_difference_samples"] = diff_samples
+    return validation
 
 
 def cmd_analyze_data_shape(args):
@@ -1042,22 +1274,30 @@ def cmd_analyze_accidents(args):
 def cmd_analyze_air(args):
     analysis_path = Path(args.analysis_json)
     data = ensure_analysis_skeleton(analysis_path)
+    rules = load_rules()
     discovery = discover_air_state_mapping(
         args.raw_dir, args.start_year, args.end_year, args.progress_every, args.top_issues
     )
     data.setdefault("air", {})
     data["air"]["discovery"] = discovery
+    data["air"]["rules"] = rules["air"]
+    data["air"]["rules"]["source"] = rules["path"]
     data["air"].setdefault("dimensions", {})
     data["air"].setdefault("facts", {})
-    state_name_to_code = discovery.get("state_name_to_code", {})
-    if not state_name_to_code:
+    discovered_state_name_to_code = discovery.get("state_name_to_code", {})
+    state_name_to_abbrev = rules["air"].get("state_name_to_abbrev", {})
+    excluded_state_names = set(rules["air"]["exclude_state_names"])
+    if not discovered_state_name_to_code:
         raise RuntimeError("Discovery failed: no air state_name_to_code mappings were detected from raw data")
+    if not state_name_to_abbrev:
+        raise RuntimeError("Rules missing: air.state_name_to_abbrev must be populated in scripts/analysis/rules.json")
 
     air = analyze_air_all(
         args.raw_dir,
         args.start_year,
         args.end_year,
-        state_name_to_code,
+        state_name_to_abbrev,
+        excluded_state_names,
         args.progress_every,
         args.top_issues,
     )
@@ -1076,6 +1316,8 @@ def cmd_analyze_air(args):
             "defining_parameter_nk_expected_distinct": m["defining_parameter_nk_expected_distinct"],
             "unknown_state_name_rows": m["unknown_state_name_rows"],
             "top_unknown_state_names": m["top_unknown_state_names"],
+            "excluded_state_name_rows": m["excluded_state_name_rows"],
+            "top_excluded_state_names": m["top_excluded_state_names"],
         }
         data["air"]["facts"]["per_year"][year] = m["facts"]
 
@@ -1086,13 +1328,16 @@ def cmd_analyze_air(args):
         "defining_parameter_nk_expected_distinct": air["all_years"]["defining_parameter_nk_expected_distinct"],
         "unknown_state_name_rows": air["all_years"]["unknown_state_name_rows"],
         "top_unknown_state_names": air["all_years"]["top_unknown_state_names"],
+        "excluded_state_name_rows": air["all_years"]["excluded_state_name_rows"],
+        "top_excluded_state_names": air["all_years"]["top_excluded_state_names"],
     }
     data["air"]["dimensions"]["dim_location_model"] = {
         "levels": ["county"],
         "county_nk_pattern": "C|county|state|country",
-        "state_source": "State Name -> discovered state_name_to_code",
+        "state_source": "State Name -> rules.air.state_name_to_abbrev",
         "country_fixed": "US",
         "fact_usage": ["location_key(county)"],
+        "county_nk_members": sorted(air.get("all_county_nk", set())),
         "rows_with_county_key_buildable": air["all_years"]["location_rows_with_county_key_buildable"],
         "rows_with_county_key_unbuildable": air["all_years"]["location_rows_with_county_key_unbuildable"],
         "unbuildable_reason_counts": air["all_years"]["location_unbuildable_reason_counts"],
@@ -1165,21 +1410,39 @@ def cmd_validate(args):
     analysis_path = Path(args.analysis_json)
     data = ensure_analysis_skeleton(analysis_path)
     report = validate_against_db(data)
+    report["_meta"] = {
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "analysis_json_path": str(analysis_path.resolve()),
+    }
     out_path = Path(args.output_json)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w", encoding="utf-8") as f:
+    tmp_out = out_path.with_suffix(out_path.suffix + ".tmp")
+    with tmp_out.open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, sort_keys=True)
         f.write("\n")
+    os.replace(tmp_out, out_path)
     print(f"[validation] report={out_path}")
-    for check in report["checks"]:
-        print(
-            f"[check] {check['name']} status={check['status']} expected={check['expected']} actual={check['actual']}"
-        )
+    summary = report.get("_summary", {})
     print(
-        f"[summary] status={report['summary']['status']} "
-        f"failed={report['summary']['failed_checks']}/{report['summary']['total_checks']}"
+        f"[summary] status={summary.get('status')} "
+        f"non_compliant={summary.get('non_compliant')} "
+        f"checked={summary.get('checked')}"
     )
-    if report["summary"]["status"] != "pass":
+    show_checked = (args.show_checked or "none").lower()
+    for item in report.get("_checked_details", []):
+        if show_checked == "none":
+            break
+        if show_checked == "compliant" and item["status"] != "compliant":
+            continue
+        if show_checked == "non_compliant" and item["status"] != "non_compliant":
+            continue
+        print(
+            f"[checked] status={item['status']} path={item['path']} "
+            f"expected={item['expected']} actual={item['actual']}"
+        )
+    for item in report.get("_non_compliant_details", []):
+        print(f"[non_compliant] path={item['path']} expected={item['expected']} actual={item['actual']}")
+    if summary.get("status") == "non_compliant":
         sys.exit(2)
 
 
@@ -1214,6 +1477,11 @@ def main():
     p3 = sub.add_parser("validate-db")
     p3.add_argument("--analysis-json", required=True)
     p3.add_argument("--output-json", required=True)
+    p3.add_argument(
+        "--show-checked",
+        choices=("none", "all", "compliant", "non_compliant"),
+        default="none",
+    )
     p3.set_defaults(func=cmd_validate)
 
     args = parser.parse_args()

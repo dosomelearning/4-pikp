@@ -1,0 +1,1188 @@
+{
+  "_checked_details": [
+    {
+      "actual": 7728394,
+      "expected": 7728394,
+      "path": "accidents.facts.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": 173459,
+      "expected": 173459,
+      "path": "accidents.facts.expected_unknown_mapped_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path": "accidents.dimensions.dim_severity.levels",
+      "status": "compliant"
+    },
+    {
+      "actual": 4,
+      "expected": 4,
+      "path": "accidents.dimensions.dim_severity.distinct_valid_levels_expected",
+      "status": "compliant"
+    },
+    {
+      "actual": 344,
+      "expected": 344,
+      "path": "accidents.dimensions.dim_road_condition.distinct_combinations_expected",
+      "status": "compliant"
+    },
+    {
+      "actual": 144,
+      "expected": 144,
+      "path": "accidents.dimensions.dim_weather_condition.distinct_categories_expected",
+      "status": "compliant"
+    },
+    {
+      "actual": 1118035,
+      "expected": 1118035,
+      "path": "accidents.dimensions.dim_location.detail_members_expected",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(3114)",
+      "expected": "contained(3114)",
+      "path": "accidents.dimensions.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 2599493,
+      "expected": 2599493,
+      "path": "air.facts.all_years.expected_stage_rows_total",
+      "status": "compliant"
+    },
+    {
+      "actual": "2016-01-01",
+      "expected": "2016-01-01",
+      "path": "air.facts.all_years.expected_min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2023-12-31",
+      "expected": "2023-12-31",
+      "path": "air.facts.all_years.expected_max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 2922,
+      "expected": 2922,
+      "path": "air.dimensions.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": 2016010100,
+      "expected": 2016010100,
+      "path": "air.dimensions.dim_time.expected_min_time_key",
+      "status": "compliant"
+    },
+    {
+      "actual": 2023123100,
+      "expected": 2023123100,
+      "path": "air.dimensions.dim_time.expected_max_time_key",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1077)",
+      "expected": "contained(1077)",
+      "path": "air.dimensions.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 6,
+      "expected": 6,
+      "path": "air.dimensions.all_years.aqi_category_nk_expected_distinct",
+      "status": "compliant"
+    },
+    {
+      "actual": 5,
+      "expected": 5,
+      "path": "air.dimensions.all_years.defining_parameter_nk_expected_distinct",
+      "status": "compliant"
+    },
+    {
+      "actual": 320795,
+      "expected": 320795,
+      "path": "air.facts.per_year.2016.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2016-01-01",
+      "expected": "2016-01-01",
+      "path": "air.dimensions.per_year.2016.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2016-12-31",
+      "expected": "2016-12-31",
+      "path": "air.dimensions.per_year.2016.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 366,
+      "expected": 366,
+      "path": "air.dimensions.per_year.2016.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1029)",
+      "expected": "contained(1029)",
+      "path": "air.dimensions.per_year.2016.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 326231,
+      "expected": 326231,
+      "path": "air.facts.per_year.2017.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2017-01-01",
+      "expected": "2017-01-01",
+      "path": "air.dimensions.per_year.2017.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2017-12-31",
+      "expected": "2017-12-31",
+      "path": "air.dimensions.per_year.2017.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2017.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1027)",
+      "expected": "contained(1027)",
+      "path": "air.dimensions.per_year.2017.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 327027,
+      "expected": 327027,
+      "path": "air.facts.per_year.2018.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2018-01-01",
+      "expected": "2018-01-01",
+      "path": "air.dimensions.per_year.2018.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2018-12-31",
+      "expected": "2018-12-31",
+      "path": "air.dimensions.per_year.2018.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2018.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1019)",
+      "expected": "contained(1019)",
+      "path": "air.dimensions.per_year.2018.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 325654,
+      "expected": 325654,
+      "path": "air.facts.per_year.2019.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2019-01-01",
+      "expected": "2019-01-01",
+      "path": "air.dimensions.per_year.2019.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2019-12-31",
+      "expected": "2019-12-31",
+      "path": "air.dimensions.per_year.2019.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2019.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1021)",
+      "expected": "contained(1021)",
+      "path": "air.dimensions.per_year.2019.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 324900,
+      "expected": 324900,
+      "path": "air.facts.per_year.2020.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2020-01-01",
+      "expected": "2020-01-01",
+      "path": "air.dimensions.per_year.2020.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2020-12-31",
+      "expected": "2020-12-31",
+      "path": "air.dimensions.per_year.2020.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 366,
+      "expected": 366,
+      "path": "air.dimensions.per_year.2020.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1004)",
+      "expected": "contained(1004)",
+      "path": "air.dimensions.per_year.2020.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 326070,
+      "expected": 326070,
+      "path": "air.facts.per_year.2021.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2021-01-01",
+      "expected": "2021-01-01",
+      "path": "air.dimensions.per_year.2021.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2021-12-31",
+      "expected": "2021-12-31",
+      "path": "air.dimensions.per_year.2021.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2021.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1003)",
+      "expected": "contained(1003)",
+      "path": "air.dimensions.per_year.2021.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 323781,
+      "expected": 323781,
+      "path": "air.facts.per_year.2022.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2022-01-01",
+      "expected": "2022-01-01",
+      "path": "air.dimensions.per_year.2022.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2022-12-31",
+      "expected": "2022-12-31",
+      "path": "air.dimensions.per_year.2022.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2022.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(1001)",
+      "expected": "contained(1001)",
+      "path": "air.dimensions.per_year.2022.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": 325035,
+      "expected": 325035,
+      "path": "air.facts.per_year.2023.expected_stage_rows",
+      "status": "compliant"
+    },
+    {
+      "actual": "2023-01-01",
+      "expected": "2023-01-01",
+      "path": "air.dimensions.per_year.2023.min_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": "2023-12-31",
+      "expected": "2023-12-31",
+      "path": "air.dimensions.per_year.2023.max_source_date",
+      "status": "compliant"
+    },
+    {
+      "actual": 365,
+      "expected": 365,
+      "path": "air.dimensions.per_year.2023.dim_time.expected_rows_distinct_hour_keys",
+      "status": "compliant"
+    },
+    {
+      "actual": "contained(991)",
+      "expected": "contained(991)",
+      "path": "air.dimensions.per_year.2023.dim_location_model.county_nk_members",
+      "status": "compliant"
+    },
+    {
+      "actual": [
+        {
+          "exists": true,
+          "header_column_count": 46,
+          "header_columns": [
+            "ID",
+            "Source",
+            "Severity",
+            "Start_Time",
+            "End_Time",
+            "Start_Lat",
+            "Start_Lng",
+            "End_Lat",
+            "End_Lng",
+            "Distance(mi)",
+            "Description",
+            "Street",
+            "City",
+            "County",
+            "State",
+            "Zipcode",
+            "Country",
+            "Timezone",
+            "Airport_Code",
+            "Weather_Timestamp",
+            "Temperature(F)",
+            "Wind_Chill(F)",
+            "Humidity(%)",
+            "Pressure(in)",
+            "Visibility(mi)",
+            "Wind_Direction",
+            "Wind_Speed(mph)",
+            "Precipitation(in)",
+            "Weather_Condition",
+            "Amenity",
+            "Bump",
+            "Crossing",
+            "Give_Way",
+            "Junction",
+            "No_Exit",
+            "Railway",
+            "Roundabout",
+            "Station",
+            "Stop",
+            "Traffic_Calming",
+            "Traffic_Signal",
+            "Turning_Loop",
+            "Sunrise_Sunset",
+            "Civil_Twilight",
+            "Nautical_Twilight",
+            "Astronomical_Twilight"
+          ],
+          "mtime_utc": "2023-05-27T23:01:02+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/archive/US_Accidents_March23.csv",
+          "size_bytes": 3058183727
+        }
+      ],
+      "expected": [
+        {
+          "exists": true,
+          "header_column_count": 46,
+          "header_columns": [
+            "ID",
+            "Source",
+            "Severity",
+            "Start_Time",
+            "End_Time",
+            "Start_Lat",
+            "Start_Lng",
+            "End_Lat",
+            "End_Lng",
+            "Distance(mi)",
+            "Description",
+            "Street",
+            "City",
+            "County",
+            "State",
+            "Zipcode",
+            "Country",
+            "Timezone",
+            "Airport_Code",
+            "Weather_Timestamp",
+            "Temperature(F)",
+            "Wind_Chill(F)",
+            "Humidity(%)",
+            "Pressure(in)",
+            "Visibility(mi)",
+            "Wind_Direction",
+            "Wind_Speed(mph)",
+            "Precipitation(in)",
+            "Weather_Condition",
+            "Amenity",
+            "Bump",
+            "Crossing",
+            "Give_Way",
+            "Junction",
+            "No_Exit",
+            "Railway",
+            "Roundabout",
+            "Station",
+            "Stop",
+            "Traffic_Calming",
+            "Traffic_Signal",
+            "Turning_Loop",
+            "Sunrise_Sunset",
+            "Civil_Twilight",
+            "Nautical_Twilight",
+            "Astronomical_Twilight"
+          ],
+          "mtime_utc": "2023-05-27T23:01:02+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/archive/US_Accidents_March23.csv",
+          "size_bytes": 3058183727
+        }
+      ],
+      "path": "data_shape.accidents.files",
+      "status": "compliant"
+    },
+    {
+      "actual": "single_file",
+      "expected": "single_file",
+      "path": "data_shape.accidents.source_mode",
+      "status": "compliant"
+    },
+    {
+      "actual": [
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "expected": [
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "path": "data_shape.air.detected_years",
+      "status": "compliant"
+    },
+    {
+      "actual": "raw/daily_aqi_by_county_YYYY.csv",
+      "expected": "raw/daily_aqi_by_county_YYYY.csv",
+      "path": "data_shape.air.file_pattern",
+      "status": "compliant"
+    },
+    {
+      "actual": [
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:03:28+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2016.csv",
+          "size_bytes": 25992037,
+          "year": 2016
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:01:54+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2017.csv",
+          "size_bytes": 26483092,
+          "year": 2017
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:00:15+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2018.csv",
+          "size_bytes": 26538081,
+          "year": 2018
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:58:32+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2019.csv",
+          "size_bytes": 26313038,
+          "year": 2019
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:56:50+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2020.csv",
+          "size_bytes": 26241993,
+          "year": 2020
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:55:03+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2021.csv",
+          "size_bytes": 26463494,
+          "year": 2021
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:53:06+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2022.csv",
+          "size_bytes": 26219004,
+          "year": 2022
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:51:03+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2023.csv",
+          "size_bytes": 26408770,
+          "year": 2023
+        }
+      ],
+      "expected": [
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:03:28+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2016.csv",
+          "size_bytes": 25992037,
+          "year": 2016
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:01:54+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2017.csv",
+          "size_bytes": 26483092,
+          "year": 2017
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T20:00:15+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2018.csv",
+          "size_bytes": 26538081,
+          "year": 2018
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:58:32+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2019.csv",
+          "size_bytes": 26313038,
+          "year": 2019
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:56:50+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2020.csv",
+          "size_bytes": 26241993,
+          "year": 2020
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:55:03+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2021.csv",
+          "size_bytes": 26463494,
+          "year": 2021
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:53:06+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2022.csv",
+          "size_bytes": 26219004,
+          "year": 2022
+        },
+        {
+          "exists": true,
+          "header_column_count": 10,
+          "header_columns": [
+            "State Name",
+            "county Name",
+            "State Code",
+            "County Code",
+            "Date",
+            "AQI",
+            "Category",
+            "Defining Parameter",
+            "Defining Site",
+            "Number of Sites Reporting"
+          ],
+          "mtime_utc": "2025-11-25T19:51:03+00:00",
+          "path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/raw/daily_aqi_by_county_2023.csv",
+          "size_bytes": 26408770,
+          "year": 2023
+        }
+      ],
+      "path": "data_shape.air.files",
+      "status": "compliant"
+    },
+    {
+      "actual": [],
+      "expected": [],
+      "path": "data_shape.air.missing_years_in_target_range",
+      "status": "compliant"
+    },
+    {
+      "actual": "yearly_files",
+      "expected": "yearly_files",
+      "path": "data_shape.air.source_mode",
+      "status": "compliant"
+    },
+    {
+      "actual": {
+        "end_year": 2023,
+        "start_year": 2016
+      },
+      "expected": {
+        "end_year": 2023,
+        "start_year": 2016
+      },
+      "path": "data_shape.air.target_year_range",
+      "status": "compliant"
+    }
+  ],
+  "_difference_samples": {
+    "accidents.county_nk": {
+      "actual_only_count": 44,
+      "actual_only_sample": [
+        "C|Adair|OK|US",
+        "C|Adjuntas|PR|US",
+        "C|Aleutians East|AK|US",
+        "C|Anchorage|AK|US",
+        "C|Bayamon|PR|US",
+        "C|Bethel|AK|US",
+        "C|Bristol City|VA|US",
+        "C|Caguas|PR|US",
+        "C|Catano|PR|US",
+        "C|Charles|VA|US",
+        "C|Clay|SD|US",
+        "C|Codington|SD|US",
+        "C|Custer|SD|US",
+        "C|Denali|AK|US",
+        "C|Fairbanks North Star|AK|US",
+        "C|Fajardo|PR|US",
+        "C|Grant|OK|US",
+        "C|Guayama|PR|US",
+        "C|Guayanilla|PR|US",
+        "C|Guaynabo|PR|US",
+        "C|Hawaii|HI|US",
+        "C|Honolulu|HI|US",
+        "C|Johnston|OK|US",
+        "C|Juncos|PR|US",
+        "C|Juneau|AK|US"
+      ],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_all_years": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2016": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2017": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2018": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2019": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2020": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2021": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2022": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air.county_nk_per_year.2023": {
+      "actual_only_count": 0,
+      "actual_only_sample": [],
+      "expected_only_count": 0,
+      "expected_only_sample": []
+    },
+    "air_vs_accidents.county_nk_overlap_basis": {
+      "actual_only_count": 2081,
+      "actual_only_sample": [
+        "C|Acadia|LA|US",
+        "C|Accomack|VA|US",
+        "C|Adair|IA|US",
+        "C|Adair|KY|US",
+        "C|Adair|MO|US",
+        "C|Adams|IA|US",
+        "C|Adams|ID|US",
+        "C|Adams|IN|US",
+        "C|Adams|MS|US",
+        "C|Adams|ND|US",
+        "C|Adams|NE|US",
+        "C|Adams|WI|US",
+        "C|Addison|VT|US",
+        "C|Aitkin|MN|US",
+        "C|Alamance|NC|US",
+        "C|Alcona|MI|US",
+        "C|Alcorn|MS|US",
+        "C|Alexander|IL|US",
+        "C|Alexandria (City)|VA|US",
+        "C|Alexandria|VA|US",
+        "C|Alger|MI|US",
+        "C|Allamakee|IA|US",
+        "C|Allegany|MD|US",
+        "C|Allegany|NY|US",
+        "C|Alleghany|NC|US"
+      ],
+      "expected_only_count": 44,
+      "expected_only_sample": [
+        "C|Adair|OK|US",
+        "C|Adjuntas|PR|US",
+        "C|Aleutians East|AK|US",
+        "C|Anchorage|AK|US",
+        "C|Bayamon|PR|US",
+        "C|Bethel|AK|US",
+        "C|Bristol City|VA|US",
+        "C|Caguas|PR|US",
+        "C|Catano|PR|US",
+        "C|Charles|VA|US",
+        "C|Clay|SD|US",
+        "C|Codington|SD|US",
+        "C|Custer|SD|US",
+        "C|Denali|AK|US",
+        "C|Fairbanks North Star|AK|US",
+        "C|Fajardo|PR|US",
+        "C|Grant|OK|US",
+        "C|Guayama|PR|US",
+        "C|Guayanilla|PR|US",
+        "C|Guaynabo|PR|US",
+        "C|Hawaii|HI|US",
+        "C|Honolulu|HI|US",
+        "C|Johnston|OK|US",
+        "C|Juncos|PR|US",
+        "C|Juneau|AK|US"
+      ]
+    }
+  },
+  "_meta": {
+    "analysis_json_path": "/home/raven/data/doc/privat/uni/univaje/4-pikp/docs/analysis.json",
+    "generated_at": "2026-03-26T15:43:46.947264+00:00"
+  },
+  "_non_compliant_details": [],
+  "_summary": {
+    "checked": 65,
+    "compliant": 65,
+    "non_compliant": 0,
+    "status": "compliant"
+  },
+  "accidents": {
+    "dimensions": {
+      "dim_location": {
+        "detail_members_expected": "compliant"
+      },
+      "dim_location_model": {
+        "county_nk_members": "compliant"
+      },
+      "dim_road_condition": {
+        "distinct_combinations_expected": "compliant"
+      },
+      "dim_severity": {
+        "distinct_valid_levels_expected": "compliant",
+        "levels": "compliant"
+      },
+      "dim_weather_condition": {
+        "distinct_categories_expected": "compliant"
+      }
+    },
+    "facts": {
+      "expected_stage_rows": "compliant",
+      "expected_unknown_mapped_rows": "compliant"
+    }
+  },
+  "air": {
+    "dimensions": {
+      "all_years": {
+        "aqi_category_nk_expected_distinct": "compliant",
+        "defining_parameter_nk_expected_distinct": "compliant"
+      },
+      "dim_location_model": {
+        "county_nk_members": "compliant"
+      },
+      "dim_time": {
+        "expected_max_time_key": "compliant",
+        "expected_min_time_key": "compliant",
+        "expected_rows_distinct_hour_keys": "compliant"
+      },
+      "per_year": {
+        "2016": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2017": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2018": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2019": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2020": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2021": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2022": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        },
+        "2023": {
+          "dim_location_model": {
+            "county_nk_members": "compliant"
+          },
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": "compliant"
+          },
+          "max_source_date": "compliant",
+          "min_source_date": "compliant"
+        }
+      }
+    },
+    "facts": {
+      "all_years": {
+        "expected_max_source_date": "compliant",
+        "expected_min_source_date": "compliant",
+        "expected_stage_rows_total": "compliant"
+      },
+      "per_year": {
+        "2016": {
+          "expected_stage_rows": "compliant"
+        },
+        "2017": {
+          "expected_stage_rows": "compliant"
+        },
+        "2018": {
+          "expected_stage_rows": "compliant"
+        },
+        "2019": {
+          "expected_stage_rows": "compliant"
+        },
+        "2020": {
+          "expected_stage_rows": "compliant"
+        },
+        "2021": {
+          "expected_stage_rows": "compliant"
+        },
+        "2022": {
+          "expected_stage_rows": "compliant"
+        },
+        "2023": {
+          "expected_stage_rows": "compliant"
+        }
+      }
+    }
+  },
+  "data_shape": {
+    "accidents": {
+      "files": "compliant",
+      "source_mode": "compliant"
+    },
+    "air": {
+      "detected_years": "compliant",
+      "file_pattern": "compliant",
+      "files": "compliant",
+      "missing_years_in_target_range": "compliant",
+      "source_mode": "compliant",
+      "target_year_range": "compliant"
+    }
+  }
+}
