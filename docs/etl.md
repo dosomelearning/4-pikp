@@ -81,9 +81,41 @@ All loaded rows in these dimensions are currently marked as `is_current = true`.
   - shared conformed dimensions (`dim_time`, `dim_location`) across datasets.
 
 ## Next Steps
-- Implement accidents ETL fully in SQL+Python (dimensions first, then facts).
-- Implement air-quality ETL in SQL+Python with conformed keys.
+- Keep air ETL reusable for additional `daily_aqi_by_county_YYYY.csv` files (same script set, different input path).
+- Add/maintain validation checks after each ETL phase (row counts, duplicate NK checks, measure range checks).
 - Keep Pentaho artifacts for reference only unless explicitly revived later.
+
+## Air ETL (Implemented)
+Air ETL is implemented in SQL+Python with explicit `air` naming in scripts:
+- `scripts/etl/populate-air-dim-location.sh`
+- `scripts/etl/populate-air-dim-aqi-category.sh`
+- `scripts/etl/populate-air-dim-defining-parameter.sh`
+- `scripts/etl/check-air-dimensions.sh`
+- `scripts/etl/populate-air-fact-daily.sh`
+- `scripts/etl/run-air-etl.sh`
+
+Execution flow:
+1. Load air dimensions (including county-level location members in shared `dw.dim_location`).
+2. Run dimension checks (`check-air-dimensions.sh`).
+3. Load air facts (`populate-air-fact-daily.sh`), or run all via `run-air-etl.sh` with `RUN_FACT=1`.
+
+Conformance and safety notes:
+- Existing accidents ETL and schema behavior are unchanged.
+- Shared conformed dimensions are reused:
+  - `dw.dim_time` with daily anchor `HH=00` for air facts.
+  - `dw.dim_location` county members using `location_nk = C|<county>|<state_abbrev>|US`.
+- Air scripts are additive/idempotent (insert missing current members, no destructive rewrites).
+
+Observed run results (sample file `raw/daily_aqi_by_county_2017.csv`):
+- `dim_location` county members extracted from air source: `1,027` NKs, all resolvable in current `dw.dim_location` after load (`missing_in_dim_location = 0`).
+- `dim_aqi_category`: `7` current rows (includes explicit `unknown` member).
+- `dim_defining_parameter`: `6` current rows (includes explicit `unknown` member).
+- `fact_air_quality_daily`: `326,231` rows loaded.
+
+Air fact skip profile (same run):
+- Skipped rows: `570`
+- Skip reason: `unknown_state_name = 570`
+- Unmapped source value identified: `Country Of Mexico` (outside US scope for this model).
 
 ## Fact Load Skip Logic (Current)
 `scripts/etl/populate-fact-accident.sh` stages and validates source rows before insert into `dw.fact_accident`.
