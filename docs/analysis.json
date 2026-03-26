@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "note": "Initial analysis skeleton. Fields are expected to evolve as new metrics are discovered.",
+  "data_shape": {
+    "accidents": {
+      "source_mode": "single_file",
+      "files": [
+        "raw/archive/US_Accidents_March23.csv"
+      ]
+    },
+    "air": {
+      "source_mode": "yearly_files",
+      "file_pattern": "raw/daily_aqi_by_county_YYYY.csv",
+      "target_year_range": {
+        "start_year": 2016,
+        "end_year": 2023
+      },
+      "files": []
+    }
+  },
+  "accidents": {
+    "dimensions": {
+      "input_rows_total": null,
+      "dim_time": {
+        "min_timestamp": null,
+        "max_timestamp": null,
+        "distinct_time_keys_expected": null
+      },
+      "dim_severity": {
+        "distinct_valid_levels_expected": null,
+        "levels": []
+      },
+      "dim_weather_condition": {
+        "distinct_categories_expected": null,
+        "missing_weather_rows": null
+      },
+      "dim_road_condition": {
+        "distinct_combinations_expected": null
+      },
+      "dim_location": {
+        "detail_members_expected": null,
+        "county_members_expected": null,
+        "insufficient_location_rows": null
+      }
+    },
+    "facts": {
+      "source_rows_total": null,
+      "expected_stage_rows": null,
+      "expected_skip_rows": null,
+      "expected_unknown_mapped_rows": null,
+      "skip_reasons": {
+        "missing_id": null,
+        "severity": null,
+        "time_parse": null,
+        "time_order": null,
+        "coords": null,
+        "location_detail": null,
+        "location_county": null
+      }
+    }
+  },
+  "air": {
+    "dimensions": {
+      "files_detected": [],
+      "per_year": {},
+      "all_years": {
+        "rows_total": null,
+        "county_nk_expected_distinct": null,
+        "aqi_category_nk_expected_distinct": null,
+        "defining_parameter_nk_expected_distinct": null,
+        "unknown_state_name_rows": null,
+        "top_unknown_state_names": []
+      }
+    },
+    "facts": {
+      "per_year": {},
+      "all_years": {
+        "rows_scanned_total": null,
+        "expected_stage_rows_total": null,
+        "expected_skip_rows_total": null,
+        "expected_min_source_date": null,
+        "expected_max_source_date": null,
+        "skip_reasons_total": {
+          "missing_state_code": null,
+          "missing_county_code": null,
+          "missing_date": null,
+          "invalid_date": null,
+          "missing_county_name": null,
+          "unknown_state_name": null,
+          "invalid_aqi": null,
+          "invalid_sites_reporting": null,
+          "missing_category_mapped_unknown": null,
+          "missing_defining_parameter_mapped_unknown": null
+        }
+      }
+    }
+  },
+  "db_validation_template": {
+    "accidents": {
+      "dimensions": {},
+      "facts": {}
+    },
+    "air": {
+      "dimensions": {},
+      "facts": {}
+    }
+  }
+}
