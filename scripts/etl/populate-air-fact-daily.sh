@@ -5,8 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/infra/compose/compose.yml"
 ENV_FILE="${ROOT_DIR}/infra/compose/.env"
 RAW_CSV="${1:-${ROOT_DIR}/raw/daily_aqi_by_county_2017.csv}"
-PROGRESS_EVERY="${PROGRESS_EVERY:-250000}"
+PROGRESS_EVERY="${PROGRESS_EVERY:-5000}"
 ROW_LIMIT="${ROW_LIMIT:-0}"
+TOP_ISSUES="${TOP_ISSUES:-10}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "ERROR: env file not found: ${ENV_FILE}"
@@ -36,6 +37,7 @@ echo "Progress interval: every ${PROGRESS_EVERY} rows"
 if [[ "${ROW_LIMIT}" != "0" ]]; then
   echo "Row limit: ${ROW_LIMIT}"
 fi
+echo "Top issue samples: ${TOP_ISSUES}"
 
 {
   cat <<'SQL'
@@ -65,15 +67,17 @@ COPY stg_fact_air_quality_daily (
 ) FROM STDIN WITH (FORMAT text, DELIMITER E'\t', NULL '\N');
 SQL
 
-  python - "${RAW_CSV}" "${PROGRESS_EVERY}" "${ROW_LIMIT}" <<'PY'
+  python - "${RAW_CSV}" "${PROGRESS_EVERY}" "${ROW_LIMIT}" "${TOP_ISSUES}" <<'PY'
 import csv
 import datetime
 import re
 import sys
+from collections import Counter
 
 csv_path = sys.argv[1]
 progress_every = int(sys.argv[2])
 row_limit = int(sys.argv[3])
+top_issues = int(sys.argv[4])
 
 space_re = re.compile(r"\s+")
 token_re = re.compile(r"[^a-z0-9]+")
@@ -144,6 +148,7 @@ skip_reason = {
     "missing_category_mapped_unknown": 0,
     "missing_defining_parameter_mapped_unknown": 0,
 }
+unknown_state_name_counter = Counter()
 
 with open(csv_path, newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
@@ -186,6 +191,7 @@ with open(csv_path, newline="", encoding="utf-8") as f:
         if state_abbrev is None:
             skipped += 1
             skip_reason["unknown_state_name"] += 1
+            unknown_state_name_counter[state_name or "<NULL>"] += 1
             continue
 
         aqi_raw = canon(row.get("AQI"))
@@ -261,6 +267,10 @@ print(
 print("[skip_reasons]", file=sys.stderr, flush=True)
 for k in sorted(skip_reason.keys()):
     print(f"  - {k}: {skip_reason[k]:,}", file=sys.stderr, flush=True)
+if skip_reason["unknown_state_name"] > 0:
+    print("[top_unknown_state_names]", file=sys.stderr, flush=True)
+    for state_name, count in unknown_state_name_counter.most_common(top_issues):
+        print(f"  {count:>8}  {state_name}", file=sys.stderr, flush=True)
 PY
 
   cat <<'SQL'

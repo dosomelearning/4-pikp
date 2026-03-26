@@ -93,11 +93,33 @@ Air ETL is implemented in SQL+Python with explicit `air` naming in scripts:
 - `scripts/etl/check-air-dimensions.sh`
 - `scripts/etl/populate-air-fact-daily.sh`
 - `scripts/etl/run-air-etl.sh`
+- `scripts/etl/run-air-etl-all.sh`
+
+Source coverage strategy:
+- Accidents ETL uses a single consolidated source file:
+  - `raw/archive/US_Accidents_March23.csv`
+- Air ETL uses a yearly file family:
+  - `raw/daily_aqi_by_county_YYYY.csv`
+- Conformance target range (based on loaded accidents fact range in `dw.fact_accident`):
+  - accidents `start_time` range: `2016-01-14` to `2023-03-31`
+  - therefore air yearly inputs should be processed for years `2016..2023`
+
+Current source availability status (`raw/`):
+- `daily_aqi_by_county_2016.csv` present
+- `daily_aqi_by_county_2017.csv` present
+- `daily_aqi_by_county_2018.csv` present
+- `daily_aqi_by_county_2019.csv` present
+- `daily_aqi_by_county_2020.csv` present
+- `daily_aqi_by_county_2021.csv` present
+- `daily_aqi_by_county_2022.csv` present
+- `daily_aqi_by_county_2023.csv` present
+- Missing yearly air input files for target range `2016..2023`: **none**
 
 Execution flow:
 1. Load air dimensions (including county-level location members in shared `dw.dim_location`).
 2. Run dimension checks (`check-air-dimensions.sh`).
 3. Load air facts (`populate-air-fact-daily.sh`), or run all via `run-air-etl.sh` with `RUN_FACT=1`.
+4. For multi-year processing, use `run-air-etl-all.sh` to iterate year files and invoke per-file idempotent ETL.
 
 Conformance and safety notes:
 - Existing accidents ETL and schema behavior are unchanged.
@@ -105,6 +127,14 @@ Conformance and safety notes:
   - `dw.dim_time` with daily anchor `HH=00` for air facts.
   - `dw.dim_location` county members using `location_nk = C|<county>|<state_abbrev>|US`.
 - Air scripts are additive/idempotent (insert missing current members, no destructive rewrites).
+- Batch strategy is intentionally idempotent per file so reruns do not break dimensions or duplicate facts.
+- Logging behavior:
+  - periodic progress output is enabled by default with `PROGRESS_EVERY=5000`,
+  - skip reasons are printed as summarized counters,
+  - top exception categories are printed via `TOP_ISSUES` (default `10`), e.g. unmapped state names.
+
+What is still missing:
+- Run and validate full multi-year air ETL pass (`2016..2023`) with `run-air-etl-all.sh` and persist final aggregate row counts/check outcomes in this document.
 
 Observed run results (sample file `raw/daily_aqi_by_county_2017.csv`):
 - `dim_location` county members extracted from air source: `1,027` NKs, all resolvable in current `dw.dim_location` after load (`missing_in_dim_location = 0`).

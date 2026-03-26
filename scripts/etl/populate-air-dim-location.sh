@@ -5,7 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/infra/compose/compose.yml"
 ENV_FILE="${ROOT_DIR}/infra/compose/.env"
 RAW_CSV="${1:-${ROOT_DIR}/raw/daily_aqi_by_county_2017.csv}"
-PROGRESS_EVERY="${PROGRESS_EVERY:-250000}"
+PROGRESS_EVERY="${PROGRESS_EVERY:-5000}"
+TOP_ISSUES="${TOP_ISSUES:-10}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "ERROR: env file not found: ${ENV_FILE}"
@@ -35,14 +36,17 @@ trap 'rm -f "${TMP_VALUES_FILE}"' EXIT
 echo "Scanning county-level air locations from: ${RAW_CSV}"
 echo "started_at: ${RUN_START_HUMAN}"
 echo "Progress interval: every ${PROGRESS_EVERY} rows"
+echo "Top issue samples: ${TOP_ISSUES}"
 
-python - "${RAW_CSV}" "${PROGRESS_EVERY}" <<'PY' > "${TMP_VALUES_FILE}"
+python - "${RAW_CSV}" "${PROGRESS_EVERY}" "${TOP_ISSUES}" <<'PY' > "${TMP_VALUES_FILE}"
 import csv
 import re
 import sys
+from collections import Counter
 
 csv_path = sys.argv[1]
 progress_every = int(sys.argv[2])
+top_issues = int(sys.argv[3])
 
 space_re = re.compile(r"\s+")
 
@@ -100,6 +104,7 @@ rows = 0
 county_members = {}
 skipped_missing_county = 0
 skipped_unknown_state = 0
+unknown_state_name_counter = Counter()
 
 with open(csv_path, newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
@@ -115,6 +120,7 @@ with open(csv_path, newline="", encoding="utf-8") as f:
             continue
         if state_code is None:
             skipped_unknown_state += 1
+            unknown_state_name_counter[state_name or "<NULL>"] += 1
             continue
 
         country_code = "US"
@@ -142,6 +148,11 @@ print(
     file=sys.stderr,
     flush=True,
 )
+
+if skipped_unknown_state > 0:
+    print("[top_unknown_state_names]", file=sys.stderr, flush=True)
+    for state_name, count in unknown_state_name_counter.most_common(top_issues):
+        print(f"  {count:>8}  {state_name}", file=sys.stderr, flush=True)
 
 for nk, cols in sorted(county_members.items()):
     print("\t".join([tsv(nk)] + [tsv(v) for v in cols]))

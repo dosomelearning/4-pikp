@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/infra/compose/compose.yml"
 ENV_FILE="${ROOT_DIR}/infra/compose/.env"
 RAW_CSV="${1:-${ROOT_DIR}/raw/daily_aqi_by_county_2017.csv}"
-PROGRESS_EVERY="${PROGRESS_EVERY:-250000}"
+PROGRESS_EVERY="${PROGRESS_EVERY:-5000}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "ERROR: env file not found: ${ENV_FILE}"

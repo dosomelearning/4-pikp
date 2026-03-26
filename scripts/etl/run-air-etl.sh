@@ -7,9 +7,10 @@ TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 LOG_FILE="${LOG_DIR}/air_etl_${TIMESTAMP}.log"
 
 RAW_CSV="${RAW_CSV:-${ROOT_DIR}/raw/daily_aqi_by_county_2017.csv}"
-PROGRESS_EVERY="${PROGRESS_EVERY:-250000}"
+PROGRESS_EVERY="${PROGRESS_EVERY:-5000}"
 ROW_LIMIT="${ROW_LIMIT:-0}"
 RUN_FACT="${RUN_FACT:-0}"
+TOP_ISSUES="${TOP_ISSUES:-10}"
 
 mkdir -p "${LOG_DIR}"
 
@@ -39,9 +40,10 @@ echo "raw_csv: ${RAW_CSV}"
 echo "progress_every: ${PROGRESS_EVERY}"
 echo "row_limit_fact: ${ROW_LIMIT}"
 echo "run_fact: ${RUN_FACT}"
+echo "top_issues: ${TOP_ISSUES}"
 
 run_step "Populate dim_location (air county keys)" \
-  env PROGRESS_EVERY="${PROGRESS_EVERY}" \
+  env PROGRESS_EVERY="${PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
   "${ROOT_DIR}/scripts/etl/populate-air-dim-location.sh" \
   "${RAW_CSV}"
 
@@ -61,7 +63,7 @@ run_step "Check air dimensions" \
 
 if [[ "${RUN_FACT}" == "1" ]]; then
   run_step "Populate fact_air_quality_daily" \
-    env PROGRESS_EVERY="${PROGRESS_EVERY}" ROW_LIMIT="${ROW_LIMIT}" \
+    env PROGRESS_EVERY="${PROGRESS_EVERY}" ROW_LIMIT="${ROW_LIMIT}" TOP_ISSUES="${TOP_ISSUES}" \
     "${ROOT_DIR}/scripts/etl/populate-air-fact-daily.sh" \
     "${RAW_CSV}"
 else
