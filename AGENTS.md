@@ -76,3 +76,24 @@ This project is focused on dimensional modeling and warehouse-style design.
 ## Collaboration Style
 - Ask clarifying questions when modeling choices are ambiguous or materially impact schema.
 - Prefer small, reversible edits and keep SQL and markdown aligned in the same change.
+
+## Git Rules (Imported)
+- Use read-only git commands (`git status`, `git diff`, `git log`, `git show`) regularly to navigate progress and validate assumptions.
+- Prefer referring to concrete git diffs/history when summarizing what changed.
+- Commit message style:
+  - subject line in imperative mood
+  - multi-line body with one bullet per logical change and blank lines between bullets
+- User pushes to remote repositories exclusively.
+- Agent may prepare commits and run other local git operations only with explicit user approval.
+- Do not commit unless explicitly approved by the user.
+- Read-only git commands are allowed; destructive/history-rewriting commands are not allowed unless explicitly requested.
+- For task-tracked work, commit intent tags are mandatory:
+  - `[checkpoint]` for partial/in-progress synchronization commits
+  - `[close]` for task-closure commits
+- For task-tracked work, all task-related commit messages must reference relevant `T-###` ID(s).
+- For task-tracked work, a task may be set to `done` only on explicit user instruction.
+- For task-tracked work, `[close]` commits are allowed only after explicit user instruction to set task status to `done`.
+
+## Get Ready Convention
+- In this project, the user command `get ready` means: read all files under `scripts/etl/` and all files under `docs/` before proceeding.
+- This readiness list is expected to evolve; additional required paths may be added as we progress.
