@@ -4,7 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOG_DIR="${ROOT_DIR}/docs/logs"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-LOG_FILE="${LOG_DIR}/air_etl_all_${TIMESTAMP}.log"
+RAW_CORRELATION_ID="${CORRELATION_ID:-}"
+CORRELATION_ID=""
+if [[ -n "${RAW_CORRELATION_ID}" ]]; then
+  CORRELATION_ID="$(printf '%s' "${RAW_CORRELATION_ID}" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9')"
+  if [[ -z "${CORRELATION_ID}" ]]; then
+    echo "ERROR: CORRELATION_ID provided but empty after normalization"
+    exit 1
+  fi
+fi
+LOG_PREFIX=""
+if [[ -n "${CORRELATION_ID}" ]]; then
+  LOG_PREFIX="${CORRELATION_ID}_"
+fi
+LOG_FILE="${LOG_DIR}/${LOG_PREFIX}air_etl_all_${TIMESTAMP}.log"
 
 AIR_DIR="${AIR_DIR:-${ROOT_DIR}/raw}"
 AIR_START_YEAR="${AIR_START_YEAR:-2016}"
@@ -31,6 +44,7 @@ fi
 echo "Air-quality ETL all-years runner"
 echo "started_at: ${RUN_START_HUMAN}"
 echo "log_file: ${LOG_FILE}"
+echo "correlation_id: ${CORRELATION_ID:-<none>}"
 echo "air_dir: ${AIR_DIR}"
 echo "year_range: ${AIR_START_YEAR}-${AIR_END_YEAR}"
 echo "run_fact: ${RUN_FACT}"
@@ -63,6 +77,7 @@ for year in $(seq "${AIR_START_YEAR}" "${AIR_END_YEAR}"); do
   echo "csv_file: ${csv_file}"
   echo "started_at: $(date -Iseconds)"
   if ! env \
+      CORRELATION_ID="${CORRELATION_ID}" \
       PROGRESS_EVERY="${PROGRESS_EVERY}" \
       ROW_LIMIT="${ROW_LIMIT}" \
       RUN_FACT="${RUN_FACT}" \

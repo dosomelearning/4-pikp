@@ -4,7 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOG_DIR="${ROOT_DIR}/docs/logs"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-LOG_FILE="${LOG_DIR}/air_etl_${TIMESTAMP}.log"
+RAW_CORRELATION_ID="${CORRELATION_ID:-}"
+CORRELATION_ID=""
+if [[ -n "${RAW_CORRELATION_ID}" ]]; then
+  CORRELATION_ID="$(printf '%s' "${RAW_CORRELATION_ID}" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9')"
+  if [[ -z "${CORRELATION_ID}" ]]; then
+    echo "ERROR: CORRELATION_ID provided but empty after normalization"
+    exit 1
+  fi
+fi
+LOG_PREFIX=""
+if [[ -n "${CORRELATION_ID}" ]]; then
+  LOG_PREFIX="${CORRELATION_ID}_"
+fi
+LOG_FILE="${LOG_DIR}/${LOG_PREFIX}air_etl_${TIMESTAMP}.log"
 
 RAW_CSV="${RAW_CSV:-${ROOT_DIR}/raw/daily_aqi_by_county_2017.csv}"
 PROGRESS_EVERY="${PROGRESS_EVERY:-5000}"
@@ -36,6 +49,7 @@ run_step() {
 echo "Air-quality ETL runner"
 echo "started_at: ${RUN_START_HUMAN}"
 echo "log_file: ${LOG_FILE}"
+echo "correlation_id: ${CORRELATION_ID:-<none>}"
 echo "raw_csv: ${RAW_CSV}"
 echo "progress_every: ${PROGRESS_EVERY}"
 echo "row_limit_fact: ${ROW_LIMIT}"

@@ -4,7 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOG_DIR="${ROOT_DIR}/docs/logs"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-LOG_FILE="${LOG_DIR}/analysis_all_${TIMESTAMP}.log"
+RAW_CORRELATION_ID="${CORRELATION_ID:-}"
+CORRELATION_ID=""
+if [[ -n "${RAW_CORRELATION_ID}" ]]; then
+  CORRELATION_ID="$(printf '%s' "${RAW_CORRELATION_ID}" | tr '[:lower:]' '[:upper:]' | tr -cd 'A-Z0-9')"
+  if [[ -z "${CORRELATION_ID}" ]]; then
+    echo "ERROR: CORRELATION_ID provided but empty after normalization"
+    exit 1
+  fi
+fi
+LOG_PREFIX=""
+if [[ -n "${CORRELATION_ID}" ]]; then
+  LOG_PREFIX="${CORRELATION_ID}_"
+fi
+LOG_FILE="${LOG_DIR}/${LOG_PREFIX}analysis_all_${TIMESTAMP}.log"
 
 ACCIDENTS_RAW="${ACCIDENTS_RAW:-${ROOT_DIR}/raw/archive/US_Accidents_March23.csv}"
 RAW_DIR="${RAW_DIR:-${ROOT_DIR}/raw}"
@@ -37,23 +50,27 @@ run_step() {
 echo "Raw analysis runner"
 echo "started_at: ${RUN_START_HUMAN}"
 echo "log_file: ${LOG_FILE}"
+echo "correlation_id: ${CORRELATION_ID:-<none>}"
 echo "accidents_raw: ${ACCIDENTS_RAW}"
 echo "air_raw_dir: ${RAW_DIR}"
 echo "air_year_range: ${AIR_START_YEAR}-${AIR_END_YEAR}"
 echo "top_issues: ${TOP_ISSUES}"
 
 run_step "Analyze data shape (metadata)" \
-  env ACCIDENTS_RAW="${ACCIDENTS_RAW}" RAW_DIR="${RAW_DIR}" \
+  env CORRELATION_ID="${CORRELATION_ID}" \
+      ACCIDENTS_RAW="${ACCIDENTS_RAW}" RAW_DIR="${RAW_DIR}" \
       AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
   "${ROOT_DIR}/scripts/analysis/run-data-shape-analysis.sh"
 
 run_step "Analyze accidents raw" \
-  env SKIP_DATA_SHAPE=1 PROGRESS_EVERY="${ACCIDENTS_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
+  env CORRELATION_ID="${CORRELATION_ID}" \
+      SKIP_DATA_SHAPE=1 PROGRESS_EVERY="${ACCIDENTS_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
   "${ROOT_DIR}/scripts/analysis/run-accidents-analysis.sh" \
   "${ACCIDENTS_RAW}"
 
 run_step "Analyze air raw (all years)" \
-  env RAW_DIR="${RAW_DIR}" AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
+  env CORRELATION_ID="${CORRELATION_ID}" \
+      RAW_DIR="${RAW_DIR}" AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
       SKIP_DATA_SHAPE=1 PROGRESS_EVERY="${AIR_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
   "${ROOT_DIR}/scripts/analysis/run-air-analysis-all.sh"
 
