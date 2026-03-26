@@ -3,21 +3,18 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ANALYSIS_JSON="${ROOT_DIR}/docs/analysis.json"
+ACCIDENTS_RAW="${ACCIDENTS_RAW:-${ROOT_DIR}/raw/archive/US_Accidents_March23.csv}"
 RAW_DIR="${RAW_DIR:-${ROOT_DIR}/raw}"
 AIR_START_YEAR="${AIR_START_YEAR:-2016}"
 AIR_END_YEAR="${AIR_END_YEAR:-2023}"
-ACCIDENTS_RAW="${ACCIDENTS_RAW:-${ROOT_DIR}/raw/archive/US_Accidents_March23.csv}"
-PROGRESS_EVERY="${PROGRESS_EVERY:-50000}"
-TOP_ISSUES="${TOP_ISSUES:-10}"
-SKIP_DATA_SHAPE="${SKIP_DATA_SHAPE:-0}"
-
-if [[ ! -d "${RAW_DIR}" ]]; then
-  echo "ERROR: raw directory not found: ${RAW_DIR}"
-  exit 1
-fi
 
 if [[ ! -f "${ANALYSIS_JSON}" ]]; then
   echo "ERROR: analysis JSON not found: ${ANALYSIS_JSON}"
+  exit 1
+fi
+
+if [[ ! -d "${RAW_DIR}" ]]; then
+  echo "ERROR: raw directory not found: ${RAW_DIR}"
   exit 1
 fi
 
@@ -29,27 +26,19 @@ fi
 RUN_START_EPOCH="$(date +%s)"
 RUN_START_HUMAN="$(date -Iseconds)"
 
-echo "Air raw analysis (all years)"
+echo "Data-shape raw analysis"
 echo "started_at: ${RUN_START_HUMAN}"
 echo "analysis_json: ${ANALYSIS_JSON}"
+echo "accidents_raw: ${ACCIDENTS_RAW}"
 echo "raw_dir: ${RAW_DIR}"
 echo "year_range: ${AIR_START_YEAR}-${AIR_END_YEAR}"
-echo "progress_every: ${PROGRESS_EVERY}"
-echo "top_issues: ${TOP_ISSUES}"
 
-if [[ "${SKIP_DATA_SHAPE}" != "1" ]]; then
-  env ACCIDENTS_RAW="${ACCIDENTS_RAW}" RAW_DIR="${RAW_DIR}" \
-      AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
-    "${ROOT_DIR}/scripts/analysis/run-data-shape-analysis.sh"
-fi
-
-python "${ROOT_DIR}/scripts/analysis/analysis_metrics.py" analyze-air \
+python "${ROOT_DIR}/scripts/analysis/analysis_metrics.py" analyze-data-shape \
   --analysis-json "${ANALYSIS_JSON}" \
+  --accidents-csv "${ACCIDENTS_RAW}" \
   --raw-dir "${RAW_DIR}" \
   --start-year "${AIR_START_YEAR}" \
-  --end-year "${AIR_END_YEAR}" \
-  --progress-every "${PROGRESS_EVERY}" \
-  --top-issues "${TOP_ISSUES}"
+  --end-year "${AIR_END_YEAR}"
 
 RUN_END_EPOCH="$(date +%s)"
 RUN_END_HUMAN="$(date -Iseconds)"

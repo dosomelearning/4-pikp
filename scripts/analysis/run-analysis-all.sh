@@ -42,14 +42,19 @@ echo "air_raw_dir: ${RAW_DIR}"
 echo "air_year_range: ${AIR_START_YEAR}-${AIR_END_YEAR}"
 echo "top_issues: ${TOP_ISSUES}"
 
+run_step "Analyze data shape (metadata)" \
+  env ACCIDENTS_RAW="${ACCIDENTS_RAW}" RAW_DIR="${RAW_DIR}" \
+      AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
+  "${ROOT_DIR}/scripts/analysis/run-data-shape-analysis.sh"
+
 run_step "Analyze accidents raw" \
-  env PROGRESS_EVERY="${ACCIDENTS_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
+  env SKIP_DATA_SHAPE=1 PROGRESS_EVERY="${ACCIDENTS_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
   "${ROOT_DIR}/scripts/analysis/run-accidents-analysis.sh" \
   "${ACCIDENTS_RAW}"
 
 run_step "Analyze air raw (all years)" \
   env RAW_DIR="${RAW_DIR}" AIR_START_YEAR="${AIR_START_YEAR}" AIR_END_YEAR="${AIR_END_YEAR}" \
-      PROGRESS_EVERY="${AIR_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
+      SKIP_DATA_SHAPE=1 PROGRESS_EVERY="${AIR_PROGRESS_EVERY}" TOP_ISSUES="${TOP_ISSUES}" \
   "${ROOT_DIR}/scripts/analysis/run-air-analysis-all.sh"
 
 RUN_END_EPOCH="$(date +%s)"

@@ -4,16 +4,18 @@
 - This document defines a **pre-ETL analysis layer** whose only input is raw source files.
 - The analysis layer exists to produce measurable expectations in `docs/analysis.json` **before** ETL writes to DB tables.
 - ETL results are then validated against those expectations after load.
+- Assumption baseline is strict: raw datasets are sufficient; analysis must not rely on hidden hardcoded domain lists.
 
 What this analysis layer must do:
 - express expected counts, ranges, distinct-key cardinalities, and skip/exception profiles from raw data,
-- use the same transformation assumptions as ETL (canonicalization, date parsing, key-shaping),
+- discover required transformation dictionaries/sets from raw data first, persist them in `analysis.json`, and only then compute metrics,
 - remain deterministic and repeatable across reruns.
 
 What this analysis layer must not do:
 - it must not modify DB data,
 - it must not replace ETL scripts,
-- it must not silently diverge from ETL rules.
+- it must not silently diverge from ETL rules,
+- it must not hardcode source-specific lookup lists that can be discovered from raw files.
 
 Critical project asymmetry to preserve:
 - accidents are analyzed from a single consolidated file,
@@ -25,10 +27,11 @@ Contract with `analysis.json`:
 - empty sections are valid placeholders until a run populates them.
 
 Execution lifecycle (target state):
-1. Run raw analysis scripts -> populate/update `docs/analysis.json`.
-2. Run ETL scripts (unchanged).
-3. Run DB-vs-analysis validation using `analysis.json` as expectation source.
-4. Record deviations explicitly (counts, reasons, and affected sections).
+1. Run data-shape analysis (metadata first) -> populate `data_shape` in `docs/analysis.json`.
+2. Run raw analysis scripts -> populate/update accidents/air metrics in `docs/analysis.json`.
+3. Run ETL scripts (unchanged).
+4. Run DB-vs-analysis validation using `analysis.json` as expectation source.
+5. Record deviations explicitly (counts, reasons, and affected sections).
 
 ## Planned Analysis Organization (`scripts/analysis/`)
 - Keep analysis scripts separate from ETL scripts; do not mix responsibilities.
@@ -63,22 +66,33 @@ This is an iterative document and may be refined across multiple cycles.
 ### Purpose
 - Understand the raw categorical/time/location shape that drives accident dimensions.
 - Quantify expected dimension members and edge cases before loading.
+- Discover road-condition boolean parsing config directly from raw columns/values.
 
 ### Analysis Targets
 - `dim_time`:
+  - explicit granularity metadata (`hour`, `YYYYMMDDHH`)
   - expected min/max hourly coverage from raw timestamps
   - expected distinct hour keys at ETL parser rules
+  - expected continuous hourly row count across source timestamp range
 - `dim_severity`:
   - expected distinct valid severity levels (`>0`)
+  - discovered full valid severity-level list from raw data
 - `dim_weather_condition`:
   - expected distinct canonical weather categories
+  - discovered full canonical weather list as `(weather_condition_nk, weather_condition_name)`
   - expected missing-weather volume (to be mapped to `unknown`)
 - `dim_road_condition`:
-  - expected distinct 13-flag combinations (canonical booleanization)
+  - discovered road flag column list from raw schema
+  - discovered boolean token profile (`true`/`false` token sets from observed values)
+  - expected distinct road-flag combinations using discovered tokens
 - `dim_location`:
   - expected detailed members (`D|...`)
   - expected county-level conformed members (`C|county|state|country`)
   - expected unmapped/insufficient location records by reason
+  - location-model metrics:
+    - row buildability for detail/county keys
+    - detail-to-county member ratio
+    - county NK set used for cross-source overlap checks
 
 ## Accidents - Facts
 ### Purpose
@@ -104,12 +118,21 @@ This is an iterative document and may be refined across multiple cycles.
 ### Purpose
 - Understand yearly/raw variation in AQI category, defining parameter, and county coverage.
 - Establish expected conformed-dimension behavior across all years before loading.
+- Discover state-name to state-code mapping from raw records (not from embedded lookup tables).
 
 ### Analysis Targets
 - Input availability and year coverage:
   - file presence for `2016..2023`
   - per-file row counts and date ranges
 - `dim_location` (county-level conformed members):
+  - discovered `state_name -> state_code` mapping and ambiguity profile
+  - explicit time-granularity metadata for air daily mapping (`daily -> HH=00`)
+  - expected distinct `HH=00` time keys across per-year/all-years files
+  - expected `HH=00` overlap with accidents window
+  - location-model metrics:
+    - row buildability for county keys
+    - unbuildable reason profile
+    - county NK overlap with accidents county-level members
   - expected county NKs per year
   - expected net-new county NKs across all years
   - expected unknown/unmapped state-name cases
@@ -140,3 +163,20 @@ This is an iterative document and may be refined across multiple cycles.
   - staged rows per year and total
   - skipped rows per year and total, by reason
   - dominant exception categories (for example, out-of-scope non-US rows)
+
+## Modeling Decisions (Not Discovery)
+These rules are design decisions aligned with ETL implementation; they are documented in analysis context but not inferred.
+
+### Time Granularity
+- `dim_time` grain is hour-level (`time_key = YYYYMMDDHH`) for both sources.
+- Accidents facts preserve exact source timestamps (`start_time`, `end_time`) while joining to hourly `start_time_key` and `end_time_key`.
+- Air daily facts map to `time_key` at midnight hour (`HH=00`) for each `source_date`.
+
+### Location Granularity
+- `dim_location` is conformed at two levels:
+  - Detailed level: `D|street|city|county|state|zipcode|country|timezone`
+  - County level: `C|county|state|country`
+- Accidents feed both detailed and county members; air feeds county-level members only.
+- Fact usage:
+  - accidents fact references both detailed and county location keys,
+  - air fact references county-level location key.

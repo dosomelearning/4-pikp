@@ -1,0 +1,532 @@
+{
+  "accidents": {
+    "dimensions": {
+      "dim_location": {
+        "county_members_expected": 0,
+        "detail_members_expected": 0,
+        "detail_to_county_ratio": null,
+        "insufficient_location_rows": 0
+      },
+      "dim_location_model": {
+        "county_nk_members": [],
+        "county_nk_pattern": null,
+        "detail_nk_pattern": null,
+        "fact_usage": [],
+        "levels": [],
+        "rows_with_both_keys_buildable": null,
+        "rows_with_county_key_buildable": null,
+        "rows_with_county_only": null,
+        "rows_with_detail_key_buildable": null,
+        "rows_with_detail_only": null,
+        "rows_with_neither": null
+      },
+      "dim_road_condition": {
+        "distinct_combinations_expected": 0
+      },
+      "dim_severity": {
+        "distinct_valid_levels_expected": 0,
+        "levels": []
+      },
+      "dim_time": {
+        "distinct_time_keys_expected": 0,
+        "expected_rows_continuous_source_range_hourly": 0,
+        "expected_rows_distinct_hour_keys": 0,
+        "granularity": null,
+        "max_timestamp": null,
+        "min_timestamp": null,
+        "time_key_format": null
+      },
+      "dim_weather_condition": {
+        "distinct_categories_expected": 0,
+        "missing_weather_rows": 0
+      },
+      "input_rows_total": 0
+    },
+    "discovery": {
+      "road_flag_column_count": 0,
+      "road_flag_columns": [],
+      "road_flag_false_tokens": [],
+      "road_flag_observed_tokens": [],
+      "road_flag_token_frequencies": {
+        "false": 0,
+        "true": 0
+      },
+      "road_flag_true_tokens": [],
+      "rows_scanned": 0,
+      "severity_levels": [],
+      "severity_levels_distinct": 0,
+      "top_road_flag_tokens": [],
+      "weather_conditions": [],
+      "weather_conditions_distinct": 0
+    },
+    "facts": {
+      "expected_skip_rows": 0,
+      "expected_stage_rows": 0,
+      "expected_unknown_mapped_rows": 0,
+      "skip_reasons": {
+        "coords": 0,
+        "location_county": 0,
+        "location_detail": 0,
+        "missing_id": 0,
+        "severity": 0,
+        "time_order": 0,
+        "time_parse": 0
+      },
+      "source_id_duplicate_rows": 0,
+      "source_rows_total": 0
+    }
+  },
+  "air": {
+    "dimensions": {
+      "all_years": {
+        "aqi_category_nk_expected_distinct": 0,
+        "county_nk_expected_distinct": 0,
+        "defining_parameter_nk_expected_distinct": 0,
+        "rows_total": 0,
+        "top_unknown_state_names": [],
+        "unknown_state_name_rows": 0
+      },
+      "dim_location_model": {
+        "country_fixed": null,
+        "county_nk_pattern": null,
+        "fact_usage": [],
+        "levels": [],
+        "rows_with_county_key_buildable": null,
+        "rows_with_county_key_unbuildable": null,
+        "state_source": null,
+        "unbuildable_reason_counts": {}
+      },
+      "dim_location_overlap_with_accidents": {
+        "expected_accidents_only_county_nk": null,
+        "expected_air_only_county_nk": null,
+        "expected_overlap_county_nk": null,
+        "method": null
+      },
+      "dim_time": {
+        "expected_max_time_key": 0,
+        "expected_min_time_key": 0,
+        "expected_rows_distinct_hour_keys": 0,
+        "granularity": null,
+        "source_date_max": null,
+        "source_date_min": null,
+        "source_mapping": null,
+        "time_key_format": null
+      },
+      "dim_time_overlap_with_accidents": {
+        "expected_accidents_only_distinct_hour_keys": 0,
+        "expected_air_only_distinct_hour_keys": 0,
+        "expected_overlap_distinct_hour_keys": 0,
+        "granularity_checked": null,
+        "method": null
+      },
+      "files_detected": [],
+      "per_year": {
+        "2016": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2017": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2018": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2019": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2020": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2021": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2022": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        },
+        "2023": {
+          "aqi_category_nk_expected_distinct": 0,
+          "county_nk_expected_distinct": 0,
+          "defining_parameter_nk_expected_distinct": 0,
+          "dim_time": {
+            "expected_rows_distinct_hour_keys": 0,
+            "granularity": null,
+            "max_source_date": null,
+            "min_source_date": null,
+            "source_mapping": null,
+            "time_key_format": null
+          },
+          "max_source_date": null,
+          "min_source_date": null,
+          "rows_total": 0,
+          "top_unknown_state_names": [],
+          "unknown_state_name_rows": 0
+        }
+      }
+    },
+    "discovery": {
+      "ambiguous_state_code_count": 0,
+      "ambiguous_state_code_details": {},
+      "ambiguous_state_name_count": 0,
+      "ambiguous_state_name_details": {},
+      "files_detected": [],
+      "rows_scanned": 0,
+      "state_code_distinct": 0,
+      "state_name_distinct": 0,
+      "state_name_to_code": {
+        "alabama": null,
+        "alaska": null,
+        "arizona": null,
+        "arkansas": null,
+        "california": null,
+        "colorado": null,
+        "connecticut": null,
+        "country of mexico": null,
+        "delaware": null,
+        "district of columbia": null,
+        "florida": null,
+        "georgia": null,
+        "hawaii": null,
+        "idaho": null,
+        "illinois": null,
+        "indiana": null,
+        "iowa": null,
+        "kansas": null,
+        "kentucky": null,
+        "louisiana": null,
+        "maine": null,
+        "maryland": null,
+        "massachusetts": null,
+        "michigan": null,
+        "minnesota": null,
+        "mississippi": null,
+        "missouri": null,
+        "montana": null,
+        "nebraska": null,
+        "nevada": null,
+        "new hampshire": null,
+        "new jersey": null,
+        "new mexico": null,
+        "new york": null,
+        "north carolina": null,
+        "north dakota": null,
+        "ohio": null,
+        "oklahoma": null,
+        "oregon": null,
+        "pennsylvania": null,
+        "puerto rico": null,
+        "rhode island": null,
+        "south carolina": null,
+        "south dakota": null,
+        "tennessee": null,
+        "texas": null,
+        "utah": null,
+        "vermont": null,
+        "virgin islands": null,
+        "virginia": null,
+        "washington": null,
+        "west virginia": null,
+        "wisconsin": null,
+        "wyoming": null
+      },
+      "top_ambiguous_state_names": []
+    },
+    "facts": {
+      "all_years": {
+        "expected_max_source_date": null,
+        "expected_min_source_date": null,
+        "expected_skip_rows_total": 0,
+        "expected_stage_rows_total": 0,
+        "rows_scanned_total": 0,
+        "skip_reasons_total": {
+          "invalid_aqi": 0,
+          "invalid_date": 0,
+          "invalid_sites_reporting": 0,
+          "missing_category_mapped_unknown": 0,
+          "missing_county_code": 0,
+          "missing_county_name": 0,
+          "missing_date": 0,
+          "missing_defining_parameter_mapped_unknown": 0,
+          "missing_state_code": 0,
+          "unknown_state_name": 0
+        }
+      },
+      "per_year": {
+        "2016": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2017": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2018": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2019": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2020": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2021": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2022": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        },
+        "2023": {
+          "duplicate_source_grain_rows": 0,
+          "expected_skip_rows": 0,
+          "expected_stage_rows": 0,
+          "rows_scanned": 0,
+          "skip_reasons": {
+            "invalid_aqi": 0,
+            "invalid_date": 0,
+            "invalid_sites_reporting": 0,
+            "missing_category_mapped_unknown": 0,
+            "missing_county_code": 0,
+            "missing_county_name": 0,
+            "missing_date": 0,
+            "missing_defining_parameter_mapped_unknown": 0,
+            "missing_state_code": 0,
+            "unknown_state_name": 0
+          }
+        }
+      }
+    }
+  },
+  "data_shape": {
+    "accidents": {
+      "files": [],
+      "source_mode": null
+    },
+    "air": {
+      "file_pattern": null,
+      "files": [],
+      "source_mode": null,
+      "target_year_range": {
+        "end_year": 0,
+        "start_year": 0
+      }
+    }
+  },
+  "db_validation_template": {
+    "accidents": {
+      "dimensions": {},
+      "facts": {}
+    },
+    "air": {
+      "dimensions": {},
+      "facts": {}
+    }
+  },
+  "note": "Analysis expectations are raw-discovery-first. Discovery objects are populated before metrics.",
+  "schema_version": 2
+}

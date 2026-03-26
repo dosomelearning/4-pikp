@@ -15,40 +15,12 @@ SPACE_RE = re.compile(r"\s+")
 TOKEN_RE = re.compile(r"[^a-z0-9]+")
 UNDERSCORE_RE = re.compile(r"_+")
 TS_HEAD_RE = re.compile(r"^(\d{4}[-/]\d{2}[-/]\d{2} \d{2}:\d{2}:\d{2})(?:\.(\d+))?")
-TRUE_VALUES = {"1", "true", "t", "yes", "y"}
-
-ROAD_FLAG_COLS = [
-    "Amenity",
-    "Bump",
-    "Crossing",
-    "Give_Way",
-    "Junction",
-    "No_Exit",
-    "Railway",
-    "Roundabout",
-    "Station",
-    "Stop",
-    "Traffic_Calming",
-    "Traffic_Signal",
-    "Turning_Loop",
-]
-
-STATE_NAME_TO_ABBREV = {
-    "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR",
-    "california": "CA", "colorado": "CO", "connecticut": "CT", "delaware": "DE",
-    "district of columbia": "DC", "florida": "FL", "georgia": "GA", "hawaii": "HI",
-    "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA", "kansas": "KS",
-    "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
-    "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS",
-    "missouri": "MO", "montana": "MT", "nebraska": "NE", "nevada": "NV",
-    "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
-    "north carolina": "NC", "north dakota": "ND", "ohio": "OH", "oklahoma": "OK",
-    "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI",
-    "south carolina": "SC", "south dakota": "SD", "tennessee": "TN", "texas": "TX",
-    "utah": "UT", "vermont": "VT", "virginia": "VA", "washington": "WA",
-    "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY",
-    "puerto rico": "PR", "guam": "GU", "american samoa": "AS",
-    "virgin islands": "VI", "northern mariana islands": "MP",
+BOOL_TOKEN_UNIVERSE = {
+    "1", "0",
+    "true", "false",
+    "t", "f",
+    "yes", "no",
+    "y", "n",
 }
 
 
@@ -65,13 +37,13 @@ def to_nk(text):
     return nk
 
 
-def as_bool(raw):
+def as_bool(raw, true_values):
     if raw is None:
         return False
     s = raw.strip().lower()
     if s == "":
         return False
-    return s in TRUE_VALUES
+    return s in true_values
 
 
 def as_float(raw):
@@ -139,7 +111,234 @@ def write_analysis(path, data):
         f.write("\n")
 
 
-def analyze_accidents(raw_csv, progress_every, top_issues):
+AIR_FILE_RE = re.compile(r"^daily_aqi_by_county_(\d{4})\.csv$")
+
+
+def scan_csv_shape(csv_path):
+    p = Path(csv_path)
+    info = {
+        "path": str(p.resolve()),
+        "exists": p.exists(),
+        "size_bytes": None,
+        "mtime_utc": None,
+        "header_columns": [],
+        "header_column_count": 0,
+    }
+    if not p.exists():
+        return info
+    st = p.stat()
+    info["size_bytes"] = st.st_size
+    info["mtime_utc"] = dt.datetime.fromtimestamp(st.st_mtime, dt.timezone.utc).isoformat()
+    with p.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        header = next(reader, [])
+        info["header_columns"] = header
+        info["header_column_count"] = len(header)
+    return info
+
+
+def analyze_data_shape(accidents_csv, raw_dir, start_year, end_year):
+    accidents_shape = scan_csv_shape(accidents_csv)
+    accidents = {
+        "source_mode": "single_file",
+        "files": [accidents_shape] if accidents_shape["exists"] else [],
+    }
+
+    raw = Path(raw_dir)
+    files = []
+    detected_years = []
+    if raw.exists() and raw.is_dir():
+        for child in sorted(raw.iterdir(), key=lambda p: p.name):
+            m = AIR_FILE_RE.match(child.name)
+            if not m:
+                continue
+            year = int(m.group(1))
+            file_shape = scan_csv_shape(str(child))
+            file_shape["year"] = year
+            files.append(file_shape)
+            detected_years.append(year)
+
+    target_years = list(range(start_year, end_year + 1))
+    detected_in_target = sorted([y for y in detected_years if start_year <= y <= end_year])
+    missing_in_target = [y for y in target_years if y not in set(detected_in_target)]
+
+    air = {
+        "source_mode": "yearly_files",
+        "file_pattern": "raw/daily_aqi_by_county_YYYY.csv",
+        "target_year_range": {"start_year": start_year, "end_year": end_year},
+        "detected_years": detected_in_target,
+        "missing_years_in_target_range": missing_in_target,
+        "files": files,
+    }
+    return {"accidents": accidents, "air": air}
+
+
+def hour_key(ts):
+    return int(f"{ts.year:04d}{ts.month:02d}{ts.day:02d}{ts.hour:02d}")
+
+
+def day_midnight_key(d):
+    return int(f"{d.year:04d}{d.month:02d}{d.day:02d}00")
+
+
+def iter_dates(start_date, end_date):
+    cur = start_date
+    step = dt.timedelta(days=1)
+    while cur <= end_date:
+        yield cur
+        cur += step
+
+
+def parse_dt_text(raw):
+    if raw is None:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return dt.datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def discover_accident_bool_and_road_config(raw_csv, progress_every, top_issues):
+    rows = 0
+    col_non_empty = Counter()
+    col_other_token = Counter()
+    col_tokens = defaultdict(Counter)
+    severity_levels = set()
+    weather_by_nk = {}
+
+    with open(raw_csv, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        columns = list(reader.fieldnames or [])
+        for row in reader:
+            rows += 1
+            if progress_every > 0 and rows % progress_every == 0:
+                print(f"[progress][discover][accidents-bool] rows={rows:,}", file=sys.stderr, flush=True)
+            for col in columns:
+                raw = row.get(col)
+                if raw is None:
+                    continue
+                token = raw.strip().lower()
+                if token == "":
+                    continue
+                col_non_empty[col] += 1
+                col_tokens[col][token] += 1
+                if token not in BOOL_TOKEN_UNIVERSE:
+                    col_other_token[col] += 1
+
+            sev_raw = canon(row.get("Severity"))
+            try:
+                sev = int(sev_raw) if sev_raw is not None else None
+            except ValueError:
+                sev = None
+            if sev is not None and sev > 0:
+                severity_levels.add(sev)
+
+            weather_name = canon(row.get("Weather_Condition"))
+            if weather_name is not None:
+                weather_nk = weather_name.lower()
+                if weather_nk not in weather_by_nk:
+                    weather_by_nk[weather_nk] = weather_name
+
+    road_flag_cols = []
+    for col in columns:
+        if col_non_empty[col] == 0:
+            continue
+        if col_other_token[col] != 0:
+            continue
+        if len(col_tokens[col]) < 2:
+            continue
+        road_flag_cols.append(col)
+
+    false_votes = Counter()
+    observed_tokens = Counter()
+    for col in road_flag_cols:
+        observed_tokens.update(col_tokens[col])
+        false_votes.update([col_tokens[col].most_common(1)[0][0]])
+
+    false_tokens = []
+    if false_votes:
+        max_votes = max(false_votes.values())
+        false_tokens = sorted([token for token, votes in false_votes.items() if votes == max_votes])
+
+    true_tokens = sorted([token for token in observed_tokens if token not in set(false_tokens)])
+    weather_conditions = [
+        {"nk": nk, "name": weather_by_nk[nk]}
+        for nk in sorted(weather_by_nk.keys())
+    ]
+
+    return {
+        "rows_scanned": rows,
+        "road_flag_columns": road_flag_cols,
+        "road_flag_column_count": len(road_flag_cols),
+        "road_flag_observed_tokens": sorted(observed_tokens.keys()),
+        "road_flag_token_frequencies": dict(observed_tokens),
+        "road_flag_false_tokens": false_tokens,
+        "road_flag_true_tokens": true_tokens,
+        "top_road_flag_tokens": format_top(observed_tokens, top_issues),
+        "severity_levels": sorted(severity_levels),
+        "severity_levels_distinct": len(severity_levels),
+        "weather_conditions": weather_conditions,
+        "weather_conditions_distinct": len(weather_conditions),
+    }
+
+
+def discover_air_state_mapping(raw_dir, start_year, end_year, progress_every, top_issues):
+    files_detected = []
+    rows = 0
+    name_to_code_counter = defaultdict(Counter)
+    code_to_name_counter = defaultdict(Counter)
+
+    for year in range(start_year, end_year + 1):
+        csv_path = Path(raw_dir) / f"daily_aqi_by_county_{year}.csv"
+        if not csv_path.exists():
+            continue
+        files_detected.append(str(csv_path))
+        with csv_path.open(newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows += 1
+                if progress_every > 0 and rows % progress_every == 0:
+                    print(f"[progress][discover][air-state] rows={rows:,}", file=sys.stderr, flush=True)
+
+                state_name = canon(get_field(row, ["State Name", "state_name"]))
+                state_code = canon(row.get("State Code"))
+                if state_name is None or state_code is None:
+                    continue
+                state_key = state_name.lower()
+                state_code = state_code.upper()
+                name_to_code_counter[state_key][state_code] += 1
+                code_to_name_counter[state_code][state_key] += 1
+
+    mapping = {}
+    ambiguous_name = {}
+    for state_name, counts in name_to_code_counter.items():
+        if len(counts) == 1:
+            mapping[state_name] = next(iter(counts))
+        else:
+            ambiguous_name[state_name] = [{"code": code, "count": count} for code, count in counts.most_common()]
+
+    ambiguous_code = {}
+    for code, counts in code_to_name_counter.items():
+        if len(counts) > 1:
+            ambiguous_code[code] = [{"name": name, "count": count} for name, count in counts.most_common()]
+
+    return {
+        "rows_scanned": rows,
+        "files_detected": files_detected,
+        "state_name_to_code": mapping,
+        "state_name_distinct": len(name_to_code_counter),
+        "state_code_distinct": len(code_to_name_counter),
+        "ambiguous_state_name_count": len(ambiguous_name),
+        "ambiguous_state_code_count": len(ambiguous_code),
+        "top_ambiguous_state_names": format_top(Counter({k: sum(c["count"] for c in v) for k, v in ambiguous_name.items()}), top_issues),
+        "ambiguous_state_name_details": ambiguous_name,
+        "ambiguous_state_code_details": ambiguous_code,
+    }
+
+
+def analyze_accidents(raw_csv, road_flag_cols, road_flag_true_tokens, progress_every, top_issues):
     rows = 0
 
     time_keys = set()
@@ -152,6 +351,12 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
     detail_nk = set()
     county_nk = set()
     insufficient_location_rows = 0
+    rows_with_detail_key_buildable = 0
+    rows_with_county_key_buildable = 0
+    rows_with_both_keys_buildable = 0
+    rows_with_detail_only = 0
+    rows_with_county_only = 0
+    rows_with_neither = 0
 
     source_ids = Counter()
 
@@ -182,7 +387,7 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
             end_dt = parse_ts(row.get("End_Time"))
             for t in (start_dt, end_dt):
                 if t is not None:
-                    time_keys.add(int(f"{t.year:04d}{t.month:02d}{t.day:02d}{t.hour:02d}"))
+                    time_keys.add(hour_key(t))
                     min_ts = t if min_ts is None or t < min_ts else min_ts
                     max_ts = t if max_ts is None or t > max_ts else max_ts
 
@@ -200,7 +405,7 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
             else:
                 weather_nk.add(weather_raw.lower())
 
-            road_bits = ["1" if as_bool(row.get(col)) else "0" for col in ROAD_FLAG_COLS]
+            road_bits = ["1" if as_bool(row.get(col), road_flag_true_tokens) else "0" for col in road_flag_cols]
             road_combos.add("|".join(road_bits))
 
             street = canon(row.get("Street"))
@@ -211,15 +416,31 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
             country = canon(row.get("Country"))
             timezone = canon(row.get("Timezone"))
 
-            if any(v is not None for v in (street, city, county, state, zipcode, country, timezone)):
+            detail_buildable = any(v is not None for v in (street, city, county, state, zipcode, country, timezone))
+            county_buildable = any(v is not None for v in (county, state, country))
+
+            if detail_buildable:
                 detail_nk.add("D|" + "|".join([
                     street or "", city or "", county or "", state or "", zipcode or "", country or "", timezone or ""
                 ]))
             else:
                 insufficient_location_rows += 1
 
-            if any(v is not None for v in (county, state, country)):
+            if county_buildable:
                 county_nk.add("C|" + "|".join([county or "", state or "", country or ""]))
+
+            if detail_buildable:
+                rows_with_detail_key_buildable += 1
+            if county_buildable:
+                rows_with_county_key_buildable += 1
+            if detail_buildable and county_buildable:
+                rows_with_both_keys_buildable += 1
+            elif detail_buildable:
+                rows_with_detail_only += 1
+            elif county_buildable:
+                rows_with_county_only += 1
+            else:
+                rows_with_neither += 1
 
             # Fact-level checks (same logic as ETL)
             if source_id is None:
@@ -276,13 +497,23 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
     def ts_or_none(t):
         return t.strftime("%Y-%m-%d %H:%M:%S") if t else None
 
+    continuous_hour_rows = None
+    if min_ts is not None and max_ts is not None:
+        min_hour = min_ts.replace(minute=0, second=0, microsecond=0)
+        max_hour = max_ts.replace(minute=0, second=0, microsecond=0)
+        continuous_hour_rows = int(((max_hour - min_hour).total_seconds() // 3600) + 1)
+
     metrics = {
         "dimensions": {
             "input_rows_total": rows,
             "dim_time": {
+                "granularity": "hour",
+                "time_key_format": "YYYYMMDDHH",
                 "min_timestamp": ts_or_none(min_ts),
                 "max_timestamp": ts_or_none(max_ts),
                 "distinct_time_keys_expected": len(time_keys),
+                "expected_rows_distinct_hour_keys": len(time_keys),
+                "expected_rows_continuous_source_range_hourly": continuous_hour_rows,
             },
             "dim_severity": {
                 "distinct_valid_levels_expected": len(severity_levels),
@@ -299,6 +530,20 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
                 "detail_members_expected": len(detail_nk),
                 "county_members_expected": len(county_nk),
                 "insufficient_location_rows": insufficient_location_rows,
+                "detail_to_county_ratio": round(len(detail_nk) / len(county_nk), 6) if len(county_nk) > 0 else None,
+            },
+            "dim_location_model": {
+                "levels": ["detail", "county"],
+                "detail_nk_pattern": "D|street|city|county|state|zipcode|country|timezone",
+                "county_nk_pattern": "C|county|state|country",
+                "fact_usage": ["location_key(detail)", "county_location_key(county)"],
+                "rows_with_detail_key_buildable": rows_with_detail_key_buildable,
+                "rows_with_county_key_buildable": rows_with_county_key_buildable,
+                "rows_with_both_keys_buildable": rows_with_both_keys_buildable,
+                "rows_with_detail_only": rows_with_detail_only,
+                "rows_with_county_only": rows_with_county_only,
+                "rows_with_neither": rows_with_neither,
+                "county_nk_members": sorted(county_nk),
             },
         },
         "facts": {
@@ -320,15 +565,19 @@ def analyze_accidents(raw_csv, progress_every, top_issues):
     return metrics
 
 
-def analyze_air_file(raw_csv, progress_every, top_issues):
+def analyze_air_file(raw_csv, state_name_to_code, progress_every, top_issues):
     rows = 0
     min_date = None
     max_date = None
+    time_keys_h00 = set()
 
     county_nk = set()
     aqi_nk = set()
     param_nk = set()
     unknown_state_counter = Counter()
+    rows_with_county_key_buildable = 0
+    rows_with_county_key_unbuildable = 0
+    county_unbuildable_reason_counts = Counter()
 
     stage_rows = 0
     skip_reason = {
@@ -363,6 +612,7 @@ def analyze_air_file(raw_csv, progress_every, top_issues):
                     parsed_date = dt.datetime.strptime(date_raw, "%Y-%m-%d").date()
                     min_date = parsed_date if min_date is None or parsed_date < min_date else min_date
                     max_date = parsed_date if max_date is None or parsed_date > max_date else max_date
+                    time_keys_h00.add(day_midnight_key(parsed_date))
                 except ValueError:
                     pass
 
@@ -380,11 +630,20 @@ def analyze_air_file(raw_csv, progress_every, top_issues):
 
             county_name = canon(get_field(row, ["county Name", "County Name", "county_name"]))
             state_name = canon(get_field(row, ["State Name", "state_name"]))
-            state_abbrev = STATE_NAME_TO_ABBREV.get(state_name.lower()) if state_name else None
+            state_abbrev = state_name_to_code.get(state_name.lower()) if state_name else None
             if county_name is not None and state_abbrev is not None:
                 county_nk.add("C|" + "|".join([county_name, state_abbrev, "US"]))
-            elif state_abbrev is None:
-                unknown_state_counter[state_name or "<NULL>"] += 1
+                rows_with_county_key_buildable += 1
+            else:
+                rows_with_county_key_unbuildable += 1
+                if county_name is None:
+                    county_unbuildable_reason_counts["missing_county_name"] += 1
+                if state_name is None:
+                    county_unbuildable_reason_counts["missing_state_name"] += 1
+                elif state_abbrev is None:
+                    county_unbuildable_reason_counts["unknown_state_name_mapping"] += 1
+                if state_abbrev is None:
+                    unknown_state_counter[state_name or "<NULL>"] += 1
 
             # Fact-logic checks
             if state_code is None:
@@ -456,6 +715,24 @@ def analyze_air_file(raw_csv, progress_every, top_issues):
         "defining_parameter_nk_expected_distinct": len(param_nk),
         "unknown_state_name_rows": sum(unknown_state_counter.values()),
         "top_unknown_state_names": format_top(unknown_state_counter, top_issues),
+        "dim_time": {
+            "granularity": "hour",
+            "time_key_format": "YYYYMMDDHH",
+            "source_mapping": "daily_to_h00",
+            "min_source_date": min_date.isoformat() if min_date else None,
+            "max_source_date": max_date.isoformat() if max_date else None,
+            "expected_rows_distinct_hour_keys": len(time_keys_h00),
+        },
+        "dim_location_model": {
+            "levels": ["county"],
+            "county_nk_pattern": "C|county|state|country",
+            "state_source": "State Name -> discovered state_name_to_code",
+            "country_fixed": "US",
+            "fact_usage": ["location_key(county)"],
+            "rows_with_county_key_buildable": rows_with_county_key_buildable,
+            "rows_with_county_key_unbuildable": rows_with_county_key_unbuildable,
+            "unbuildable_reason_counts": dict(county_unbuildable_reason_counts),
+        },
         "facts": {
             "rows_scanned": rows,
             "expected_stage_rows": stage_rows,
@@ -485,6 +762,9 @@ def aggregate_air(per_year):
     max_date = None
     top_unknown = Counter()
     skip_reasons_total = defaultdict(int)
+    loc_rows_buildable = 0
+    loc_rows_unbuildable = 0
+    loc_unbuildable_reasons = defaultdict(int)
 
     for metrics in per_year.values():
         all_rows += metrics["rows_total"]
@@ -505,6 +785,11 @@ def aggregate_air(per_year):
             top_unknown[item["name"]] += item["count"]
         for k, v in metrics["facts"]["skip_reasons"].items():
             skip_reasons_total[k] += v
+        loc_model = metrics.get("dim_location_model", {})
+        loc_rows_buildable += loc_model.get("rows_with_county_key_buildable", 0)
+        loc_rows_unbuildable += loc_model.get("rows_with_county_key_unbuildable", 0)
+        for k, v in loc_model.get("unbuildable_reason_counts", {}).items():
+            loc_unbuildable_reasons[k] += v
 
     # Distinct counts are not additive across years; compute separately from per-year placeholders:
     # caller injects the cross-year distincts.
@@ -520,16 +805,20 @@ def aggregate_air(per_year):
         "aqi_category_nk_expected_distinct": None,
         "defining_parameter_nk_expected_distinct": None,
         "unknown_state_name_rows": skip_reasons_total.get("unknown_state_name", 0),
+        "location_rows_with_county_key_buildable": loc_rows_buildable,
+        "location_rows_with_county_key_unbuildable": loc_rows_unbuildable,
+        "location_unbuildable_reason_counts": dict(loc_unbuildable_reasons),
     }
 
 
-def analyze_air_all(raw_dir, start_year, end_year, progress_every, top_issues):
+def analyze_air_all(raw_dir, start_year, end_year, state_name_to_code, progress_every, top_issues):
     per_year = {}
     files_detected = []
 
     all_county = set()
     all_aqi = set()
     all_param = set()
+    all_time_keys_h00 = set()
 
     for year in range(start_year, end_year + 1):
         csv_path = Path(raw_dir) / f"daily_aqi_by_county_{year}.csv"
@@ -537,7 +826,7 @@ def analyze_air_all(raw_dir, start_year, end_year, progress_every, top_issues):
             continue
         files_detected.append(str(csv_path))
         y = str(year)
-        m = analyze_air_file(str(csv_path), progress_every, top_issues)
+        m = analyze_air_file(str(csv_path), state_name_to_code, progress_every, top_issues)
         per_year[y] = m
 
         # recompute sets for global distinct counts from yearly metrics by rescanning lightweight values
@@ -547,7 +836,7 @@ def analyze_air_all(raw_dir, start_year, end_year, progress_every, top_issues):
             for row in reader:
                 county_name = canon(get_field(row, ["county Name", "County Name", "county_name"]))
                 state_name = canon(get_field(row, ["State Name", "state_name"]))
-                state_abbrev = STATE_NAME_TO_ABBREV.get(state_name.lower()) if state_name else None
+                state_abbrev = state_name_to_code.get(state_name.lower()) if state_name else None
                 if county_name is not None and state_abbrev is not None:
                     all_county.add("C|" + "|".join([county_name, state_abbrev, "US"]))
 
@@ -562,13 +851,25 @@ def analyze_air_all(raw_dir, start_year, end_year, progress_every, top_issues):
                     nk = to_nk(param_name)
                     if nk:
                         all_param.add(nk)
+                date_raw = canon(row.get("Date"))
+                if date_raw is not None:
+                    try:
+                        all_time_keys_h00.add(day_midnight_key(dt.datetime.strptime(date_raw, "%Y-%m-%d").date()))
+                    except ValueError:
+                        pass
 
     agg = aggregate_air(per_year)
     agg["county_nk_expected_distinct"] = len(all_county)
     agg["aqi_category_nk_expected_distinct"] = len(all_aqi)
     agg["defining_parameter_nk_expected_distinct"] = len(all_param)
 
-    return {"files_detected": files_detected, "per_year": per_year, "all_years": agg}
+    return {
+        "files_detected": files_detected,
+        "per_year": per_year,
+        "all_years": agg,
+        "all_time_keys_h00": all_time_keys_h00,
+        "all_county_nk": all_county,
+    }
 
 
 def run_sql(sql):
@@ -627,6 +928,54 @@ def validate_against_db(analysis):
         "status": "pass" if exp_air_max == db_air_max else "fail",
     })
 
+    # air fact time-key coverage
+    db_air_time = run_sql(
+        "SELECT COUNT(DISTINCT time_key), MIN(time_key)::text, MAX(time_key)::text FROM dw.fact_air_quality_daily;"
+    )[0]
+    db_air_time_distinct = int(db_air_time[0])
+    db_air_time_min = int(db_air_time[1]) if db_air_time[1] else None
+    db_air_time_max = int(db_air_time[2]) if db_air_time[2] else None
+
+    exp_air_time = analysis["air"]["dimensions"].get("dim_time", {})
+    exp_air_time_distinct = exp_air_time.get("expected_rows_distinct_hour_keys")
+    exp_air_time_min = exp_air_time.get("expected_min_time_key")
+    exp_air_time_max = exp_air_time.get("expected_max_time_key")
+
+    results["checks"].append({
+        "name": "air.fact_distinct_time_keys",
+        "expected": exp_air_time_distinct,
+        "actual": db_air_time_distinct,
+        "status": "pass" if exp_air_time_distinct == db_air_time_distinct else "fail",
+    })
+    results["checks"].append({
+        "name": "air.fact_min_time_key",
+        "expected": exp_air_time_min,
+        "actual": db_air_time_min,
+        "status": "pass" if exp_air_time_min == db_air_time_min else "fail",
+    })
+    results["checks"].append({
+        "name": "air.fact_max_time_key",
+        "expected": exp_air_time_max,
+        "actual": db_air_time_max,
+        "status": "pass" if exp_air_time_max == db_air_time_max else "fail",
+    })
+
+    # air county-location coverage (fact -> dim_location NKs)
+    db_air_county_nk_distinct = int(
+        run_sql(
+            "SELECT COUNT(DISTINCT dl.location_nk) "
+            "FROM dw.fact_air_quality_daily f "
+            "JOIN dw.dim_location dl ON dl.location_key = f.location_key;"
+        )[0][0]
+    )
+    exp_air_county_nk_distinct = analysis["air"]["dimensions"]["all_years"]["county_nk_expected_distinct"]
+    results["checks"].append({
+        "name": "air.fact_distinct_county_location_nk",
+        "expected": exp_air_county_nk_distinct,
+        "actual": db_air_county_nk_distinct,
+        "status": "pass" if exp_air_county_nk_distinct == db_air_county_nk_distinct else "fail",
+    })
+
     # dimension current counts for new air dims
     db_aqi_dim = int(run_sql("SELECT COUNT(*) FROM dw.dim_aqi_category WHERE is_current=TRUE;")[0][0])
     db_param_dim = int(run_sql("SELECT COUNT(*) FROM dw.dim_defining_parameter WHERE is_current=TRUE;")[0][0])
@@ -654,17 +1003,64 @@ def validate_against_db(analysis):
     return results
 
 
+def cmd_analyze_data_shape(args):
+    analysis_path = Path(args.analysis_json)
+    data = ensure_analysis_skeleton(analysis_path)
+    data["data_shape"] = analyze_data_shape(
+        args.accidents_csv, args.raw_dir, args.start_year, args.end_year
+    )
+    write_analysis(analysis_path, data)
+
+
 def cmd_analyze_accidents(args):
     analysis_path = Path(args.analysis_json)
     data = ensure_analysis_skeleton(analysis_path)
-    data["accidents"] = analyze_accidents(args.raw_csv, args.progress_every, args.top_issues)
+    discovery = discover_accident_bool_and_road_config(args.raw_csv, args.progress_every, args.top_issues)
+    data.setdefault("accidents", {})
+    data["accidents"]["discovery"] = discovery
+    data["accidents"]["dimensions"] = data["accidents"].get("dimensions", {})
+    data["accidents"]["facts"] = data["accidents"].get("facts", {})
+
+    road_flag_cols = discovery.get("road_flag_columns", [])
+    road_flag_true_tokens = set(discovery.get("road_flag_true_tokens", []))
+    if not road_flag_cols:
+        raise RuntimeError("Discovery failed: no accident road flag columns were detected from raw data")
+    if not road_flag_true_tokens:
+        raise RuntimeError("Discovery failed: no accident true tokens were detected from raw data")
+    data["accidents"].update(
+        analyze_accidents(
+            args.raw_csv,
+            road_flag_cols,
+            road_flag_true_tokens,
+            args.progress_every,
+            args.top_issues,
+        )
+    )
     write_analysis(analysis_path, data)
 
 
 def cmd_analyze_air(args):
     analysis_path = Path(args.analysis_json)
     data = ensure_analysis_skeleton(analysis_path)
-    air = analyze_air_all(args.raw_dir, args.start_year, args.end_year, args.progress_every, args.top_issues)
+    discovery = discover_air_state_mapping(
+        args.raw_dir, args.start_year, args.end_year, args.progress_every, args.top_issues
+    )
+    data.setdefault("air", {})
+    data["air"]["discovery"] = discovery
+    data["air"].setdefault("dimensions", {})
+    data["air"].setdefault("facts", {})
+    state_name_to_code = discovery.get("state_name_to_code", {})
+    if not state_name_to_code:
+        raise RuntimeError("Discovery failed: no air state_name_to_code mappings were detected from raw data")
+
+    air = analyze_air_all(
+        args.raw_dir,
+        args.start_year,
+        args.end_year,
+        state_name_to_code,
+        args.progress_every,
+        args.top_issues,
+    )
     data["air"]["dimensions"]["files_detected"] = air["files_detected"]
     data["air"]["dimensions"]["per_year"] = {}
     data["air"]["facts"]["per_year"] = {}
@@ -673,6 +1069,8 @@ def cmd_analyze_air(args):
             "rows_total": m["rows_total"],
             "min_source_date": m["min_source_date"],
             "max_source_date": m["max_source_date"],
+            "dim_time": m["dim_time"],
+            "dim_location_model": m["dim_location_model"],
             "county_nk_expected_distinct": m["county_nk_expected_distinct"],
             "aqi_category_nk_expected_distinct": m["aqi_category_nk_expected_distinct"],
             "defining_parameter_nk_expected_distinct": m["defining_parameter_nk_expected_distinct"],
@@ -689,6 +1087,69 @@ def cmd_analyze_air(args):
         "unknown_state_name_rows": air["all_years"]["unknown_state_name_rows"],
         "top_unknown_state_names": air["all_years"]["top_unknown_state_names"],
     }
+    data["air"]["dimensions"]["dim_location_model"] = {
+        "levels": ["county"],
+        "county_nk_pattern": "C|county|state|country",
+        "state_source": "State Name -> discovered state_name_to_code",
+        "country_fixed": "US",
+        "fact_usage": ["location_key(county)"],
+        "rows_with_county_key_buildable": air["all_years"]["location_rows_with_county_key_buildable"],
+        "rows_with_county_key_unbuildable": air["all_years"]["location_rows_with_county_key_unbuildable"],
+        "unbuildable_reason_counts": air["all_years"]["location_unbuildable_reason_counts"],
+    }
+    air_time_keys_h00 = air["all_time_keys_h00"]
+    data["air"]["dimensions"]["dim_time"] = {
+        "granularity": "hour",
+        "time_key_format": "YYYYMMDDHH",
+        "source_mapping": "daily_to_h00",
+        "expected_rows_distinct_hour_keys": len(air_time_keys_h00),
+        "expected_min_time_key": min(air_time_keys_h00) if air_time_keys_h00 else None,
+        "expected_max_time_key": max(air_time_keys_h00) if air_time_keys_h00 else None,
+        "source_date_min": air["all_years"]["expected_min_source_date"],
+        "source_date_max": air["all_years"]["expected_max_source_date"],
+    }
+
+    overlap = {
+        "granularity_checked": "hour_h00",
+        "method": "source_range_midnight_intersection",
+        "expected_overlap_distinct_hour_keys": None,
+        "expected_air_only_distinct_hour_keys": None,
+        "expected_accidents_only_distinct_hour_keys": None,
+    }
+    acc_dim_time = data.get("accidents", {}).get("dimensions", {}).get("dim_time", {})
+    acc_min_ts = parse_dt_text(acc_dim_time.get("min_timestamp"))
+    acc_max_ts = parse_dt_text(acc_dim_time.get("max_timestamp"))
+    if acc_min_ts and acc_max_ts:
+        acc_midnight_keys = {
+            day_midnight_key(d)
+            for d in iter_dates(acc_min_ts.date(), acc_max_ts.date())
+        }
+        overlap_keys = air_time_keys_h00 & acc_midnight_keys
+        overlap["expected_overlap_distinct_hour_keys"] = len(overlap_keys)
+        overlap["expected_air_only_distinct_hour_keys"] = len(air_time_keys_h00 - overlap_keys)
+        overlap["expected_accidents_only_distinct_hour_keys"] = len(acc_midnight_keys - overlap_keys)
+    data["air"]["dimensions"]["dim_time_overlap_with_accidents"] = overlap
+
+    county_overlap = {
+        "method": "county_nk_set_intersection",
+        "expected_overlap_county_nk": None,
+        "expected_air_only_county_nk": None,
+        "expected_accidents_only_county_nk": None,
+    }
+    air_county_nk = set(air.get("all_county_nk", set()))
+    acc_county_nk = set(
+        data.get("accidents", {})
+        .get("dimensions", {})
+        .get("dim_location_model", {})
+        .get("county_nk_members", [])
+    )
+    if air_county_nk and acc_county_nk:
+        county_overlap_set = air_county_nk & acc_county_nk
+        county_overlap["expected_overlap_county_nk"] = len(county_overlap_set)
+        county_overlap["expected_air_only_county_nk"] = len(air_county_nk - county_overlap_set)
+        county_overlap["expected_accidents_only_county_nk"] = len(acc_county_nk - county_overlap_set)
+    data["air"]["dimensions"]["dim_location_overlap_with_accidents"] = county_overlap
+
     data["air"]["facts"]["all_years"] = {
         "rows_scanned_total": air["all_years"]["rows_total"],
         "expected_stage_rows_total": air["all_years"]["expected_stage_rows_total"],
@@ -725,6 +1186,14 @@ def cmd_validate(args):
 def main():
     parser = argparse.ArgumentParser(description="Raw-data analysis metrics for ETL explainability")
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p0 = sub.add_parser("analyze-data-shape")
+    p0.add_argument("--analysis-json", required=True)
+    p0.add_argument("--accidents-csv", required=True)
+    p0.add_argument("--raw-dir", required=True)
+    p0.add_argument("--start-year", type=int, default=2016)
+    p0.add_argument("--end-year", type=int, default=2023)
+    p0.set_defaults(func=cmd_analyze_data_shape)
 
     p1 = sub.add_parser("analyze-accidents")
     p1.add_argument("--analysis-json", required=True)
