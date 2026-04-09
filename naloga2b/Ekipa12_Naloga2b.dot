@@ -1,0 +1,57 @@
+digraph DW {
+  graph [rankdir=LR, fontname="Helvetica", fontsize=10, labelloc="t", label="Naloga2b Dual-Track Facts (v1 vs v2)"];
+  node [shape=record, fontname="Helvetica", fontsize=9, style=filled, color="#555555"];
+  edge [color="#666666", arrowsize=0.7];
+
+  // Shared dimensions (gray)
+  dim_time [label="{dim_time|time_key (PK)\ldate_value\lyear_num\lmonth_num\lday_num\lhour_num\lday_of_week_num\lday_of_week_name\lis_weekend\l}", fillcolor="#ececec"];
+  dim_location [label="{dim_location (v1 legacy dim)|location_key (PK)\llocation_nk\lstreet\lcity\lcounty\lstate_code\lzipcode\lcountry_code\ltimezone_name\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ffe7cc"];
+  dim_weather_condition [label="{dim_weather_condition|weather_condition_key (PK)\lweather_condition_nk\lweather_condition_name\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ececec"];
+  dim_road_condition [label="{dim_road_condition|road_condition_key (PK)\lroad_condition_nk\lamenity\lbump\lcrossing\lgive_way\ljunction\lno_exit\lrailway\lroundabout\lstation\lstop_sign\ltraffic_calming\ltraffic_signal\lturning_loop\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ececec"];
+  dim_severity [label="{dim_severity|severity_key (PK)\lseverity_level\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ececec"];
+  dim_aqi_category [label="{dim_aqi_category|aqi_category_key (PK)\laqi_category_nk\laqi_category_name\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ececec"];
+  dim_defining_parameter [label="{dim_defining_parameter|defining_parameter_key (PK)\ldefining_parameter_nk\ldefining_parameter_name\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#ececec"];
+
+  // New dimensions used by v2 (blue tint)
+  dim_county [label="{dim_county (new)|county_key (PK)\lcounty_nk\lcounty_name\lstate_code\lcountry_code\lsource_county_code\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#dff1ff"];
+  dim_streetcity [label="{dim_streetcity (new)|streetcity_key (PK)\lstreetcity_nk\lcounty_key (FK)\lstreet\lcity\lzipcode\ltimezone_name\lvalid_from\lvalid_to\lis_current\l}", fillcolor="#dff1ff"];
+
+  // v1 fact tables (orange tint)
+  fact_accident [label="{fact_accident (v1)|source_accident_id (PK)\lstart_time_key (FK)\lend_time_key (FK)\llocation_key (FK)\lcounty_location_key (FK)\lweather_condition_key (FK)\lroad_condition_key (FK)\lseverity_key (FK)\lstart_time\lend_time\laccident_duration_minutes\lroad_affected_length_mi\lstart_latitude\lstart_longitude\lend_latitude\lend_longitude\l}", fillcolor="#ffe7cc"];
+  fact_air_quality_daily [label="{fact_air_quality_daily (v1)|source_state_code (PK)\lsource_county_code (PK)\lsource_date (PK)\ltime_key (FK)\llocation_key (FK)\laqi_category_key (FK)\ldefining_parameter_key (FK)\laqi\lnumber_of_sites_reporting\ldefining_site_code\l}", fillcolor="#ffe7cc"];
+
+  // v2 fact tables (blue tint, same family as new dims)
+  fact_accident_v2 [label="{fact_accident_v2|source_accident_id (PK)\lstart_time_key (FK)\lend_time_key (FK)\lstreetcity_key (FK)\lcounty_key (FK)\lweather_condition_key (FK)\lroad_condition_key (FK)\lseverity_key (FK)\lstart_time\lend_time\laccident_duration_minutes\lroad_affected_length_mi\lstart_latitude\lstart_longitude\lend_latitude\lend_longitude\l}", fillcolor="#dff1ff"];
+  fact_air_quality_daily_v2 [label="{fact_air_quality_daily_v2|source_state_code (PK)\lsource_county_code (PK)\lsource_date (PK)\ltime_key (FK)\lcounty_key (FK)\laqi_category_key (FK)\ldefining_parameter_key (FK)\laqi\lnumber_of_sites_reporting\ldefining_site_code\l}", fillcolor="#dff1ff"];
+
+  // Snowflake relation
+  dim_streetcity -> dim_county [label="county_key"];
+
+  // v1 relations
+  fact_accident -> dim_time [label="start_time_key"];
+  fact_accident -> dim_time [label="end_time_key"];
+  fact_accident -> dim_location [label="location_key"];
+  fact_accident -> dim_location [label="county_location_key"];
+  fact_accident -> dim_weather_condition [label="weather_condition_key"];
+  fact_accident -> dim_road_condition [label="road_condition_key"];
+  fact_accident -> dim_severity [label="severity_key"];
+
+  fact_air_quality_daily -> dim_time [label="time_key"];
+  fact_air_quality_daily -> dim_location [label="location_key"];
+  fact_air_quality_daily -> dim_aqi_category [label="aqi_category_key"];
+  fact_air_quality_daily -> dim_defining_parameter [label="defining_parameter_key"];
+
+  // v2 relations
+  fact_accident_v2 -> dim_time [label="start_time_key"];
+  fact_accident_v2 -> dim_time [label="end_time_key"];
+  fact_accident_v2 -> dim_streetcity [label="streetcity_key"];
+  fact_accident_v2 -> dim_county [label="county_key"];
+  fact_accident_v2 -> dim_weather_condition [label="weather_condition_key"];
+  fact_accident_v2 -> dim_road_condition [label="road_condition_key"];
+  fact_accident_v2 -> dim_severity [label="severity_key"];
+
+  fact_air_quality_daily_v2 -> dim_time [label="time_key"];
+  fact_air_quality_daily_v2 -> dim_county [label="county_key"];
+  fact_air_quality_daily_v2 -> dim_aqi_category [label="aqi_category_key"];
+  fact_air_quality_daily_v2 -> dim_defining_parameter [label="defining_parameter_key"];
+}
