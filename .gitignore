@@ -64,3 +64,6 @@ infra/**/logs/
 infra/**/pgdata/
 infra/**/postgres-data/
 infra/**/db-data/
+
+# Codex CLI local marker
+.codex
