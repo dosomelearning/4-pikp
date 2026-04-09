@@ -33,6 +33,14 @@ Both are valid. They exist side-by-side for clear comparison.
   - `fact_accident_v2.streetcity_key`
   - `fact_accident_v2.county_key`
 
+### v2 Natural Keys (Implementation Contract)
+- `dim_county.county_nk` uses: `C|<county_name>|<state_code>|<country_code>`
+- `dim_streetcity.streetcity_nk` is a deterministic hash key, not UUID:
+  - format: `SC|<sha1_hex>`
+  - built from canonical tuple:
+    - `<street>|<city>|<zipcode>|<timezone_name>|<county_nk>`
+- `fact_accident_v2.source_accident_id` uses source `ID` directly as fact natural key and primary key.
+
 ## Why Keep Both
 - Preserve and respect invested implementation effort in v1.
 - Avoid rewriting stable ETL.

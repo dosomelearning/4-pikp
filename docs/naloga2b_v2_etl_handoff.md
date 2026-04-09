@@ -99,6 +99,27 @@ Under `scripts/etl/`, add v2-specific scripts with clear naming, for example:
 - `run-v2-etl.sh` (optional orchestrator)
 - `check-v2-integrity.sh` (validation checks)
 
+### Execution Syntax (Implemented)
+From repository root:
+
+```bash
+# Full v2 flow (dims + facts)
+./scripts/etl/run-v2-etl.sh
+
+# Integrity check for v2 dimensions/facts and v1-v2 row parity
+./scripts/etl/check-v2-integrity.sh
+```
+
+Optional examples:
+
+```bash
+# Run only v2 dimensions (skip both fact loads)
+RUN_FACT_ACCIDENT_V2=0 RUN_FACT_AIR_V2=0 ./scripts/etl/run-v2-etl.sh
+
+# Run with explicit air year window
+AIR_START_YEAR=2016 AIR_END_YEAR=2023 ./scripts/etl/run-v2-etl.sh
+```
+
 ### Required behavior
 - Idempotent inserts where possible.
 - Preserve source natural keys in v2 facts (`source_accident_id`, state/county/date triplet).

@@ -66,6 +66,36 @@ For existing databases, use incremental migration scripts that only add new obje
 - `dw.fact_accident_v2`
 - `dw.fact_air_quality_daily_v2`
 
+## v2 Natural Key Specification
+
+To keep v2 ETL deterministic and idempotent, natural-key construction is explicit:
+
+- `dim_county.county_nk`:
+  - format: `C|<county_name>|<state_code>|<country_code>`
+  - county-name normalization includes explicit alias handling:
+    - `St` / `St.` -> `Saint`
+    - `Ste` / `Ste.` -> `Sainte`
+  - for air-driven conformance, code-backed identity (`country_code`, `state_code`, `source_county_code`) is preferred when available.
+
+- `dim_streetcity.streetcity_nk`:
+  - not a UUID,
+  - deterministic hash key with prefix: `SC|<sha1_hex>`,
+  - hash input is canonical tuple:
+    - `<street>|<city>|<zipcode>|<timezone_name>|<county_nk>`
+  - purpose:
+    - fixed-length NK,
+    - robust delimiter-safe identity,
+    - stable rerun behavior for idempotent loads.
+
+- `fact_accident_v2.source_accident_id`:
+  - source-grain natural key from US-Accidents `ID`,
+  - used directly as fact primary key for v1/v2 comparability.
+
+- `fact_air_quality_daily_v2` source-grain composite key:
+  - (`source_state_code`, `source_county_code`, `source_date`),
+  - mapped directly from EPA AQS source grain,
+  - used as fact primary key for deterministic idempotent reruns.
+
 ## Foreign Keys: Inline `REFERENCES`
 
 In `naloga2b` SQL, foreign keys are defined inline using `REFERENCES`.

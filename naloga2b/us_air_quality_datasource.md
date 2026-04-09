@@ -27,6 +27,12 @@ Both are valid and intentionally coexist.
 
 This v2 path is explicitly aligned with county-level source grain.
 
+### v2 Natural Keys (Implementation Contract)
+- `fact_air_quality_daily_v2` uses source grain as composite natural key and primary key:
+  - (`source_state_code`, `source_county_code`, `source_date`)
+- `dim_county.county_nk` uses: `C|<county_name>|<state_code>|<country_code>`
+- when present, `source_county_code` is retained in `dim_county` for code-based conformance identity.
+
 ## Why Keep Both
 - Preserve existing v1 ETL and outputs.
 - Add new v2 conformance path without rewriting legacy code.
