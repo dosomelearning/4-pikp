@@ -78,7 +78,7 @@ Datasource docs:
 
 Diagram:
 - `naloga2b/Ekipa12_Naloga2b.dot`
-- `naloga2b/Ekipa12_Naloga2b.png`
+- `docs/img/Ekipa12_Naloga2b.png`
 
 Dot tooling reference:
 - `naloga2b/GRAPHVIZ_DOT_USAGE.md`

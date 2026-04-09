@@ -3,7 +3,7 @@
 This project uses Graphviz to generate schema diagrams from a text source file.
 
 - Source file: `Ekipa12_Naloga2b.dot`
-- Generated image: `Ekipa12_Naloga2b.png`
+- Generated image: `docs/img/Ekipa12_Naloga2b.png`
 
 ## 1. Prerequisite
 
@@ -31,7 +31,7 @@ Common formats:
 Generate PNG from the current source:
 
 ```bash
-dot -Tpng naloga2b/Ekipa12_Naloga2b.dot -o naloga2b/Ekipa12_Naloga2b.png
+dot -Tpng naloga2b/Ekipa12_Naloga2b.dot -o docs/img/Ekipa12_Naloga2b.png
 ```
 
 Optional SVG output:
@@ -46,13 +46,13 @@ dot -Tsvg naloga2b/Ekipa12_Naloga2b.dot -o naloga2b/Ekipa12_Naloga2b.svg
 2. Regenerate diagram:
 
 ```bash
-dot -Tpng naloga2b/Ekipa12_Naloga2b.dot -o naloga2b/Ekipa12_Naloga2b.png
+dot -Tpng naloga2b/Ekipa12_Naloga2b.dot -o docs/img/Ekipa12_Naloga2b.png
 ```
 
 3. Verify output file metadata:
 
 ```bash
-file naloga2b/Ekipa12_Naloga2b.png
+file docs/img/Ekipa12_Naloga2b.png
 ```
 
 ## 5. Minimal `.dot` Template

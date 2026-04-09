@@ -1,0 +1,22 @@
+# Project Python dependencies
+#
+# Current state:
+# - ETL and analysis scripts use Python standard library only.
+# - No additional pip-installable packages are required at this time.
+# - PostgreSQL operations are executed through SQL/psql in shell scripts
+#   (typically via `docker compose ... psql`), not via Python DB drivers.
+#
+# Standard-library modules currently used by project scripts:
+# - argparse
+# - collections
+# - csv
+# - datetime
+# - hashlib
+# - json
+# - os
+# - pathlib
+# - re
+# - subprocess
+# - sys
+#
+# If you add non-stdlib imports, list and pin them here.
