@@ -53,3 +53,37 @@ services:
     volumes:
       - ../platform/pentaho:/workspace/pentaho
       - ../../raw:/workspace/raw:ro
+
+  superset:
+    image: ${SUPERSET_IMAGE}
+    container_name: ${SUPERSET_CONTAINER}
+    restart: unless-stopped
+    security_opt:
+      - label=disable
+    env_file:
+      - .env
+    profiles:
+      - tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_META_DB_URI: ${SUPERSET_META_DB_URI}
+      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      SUPERSET_ADMIN_FIRST_NAME: ${SUPERSET_ADMIN_FIRST_NAME}
+      SUPERSET_ADMIN_LAST_NAME: ${SUPERSET_ADMIN_LAST_NAME}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL}
+    ports:
+      - "${SUPERSET_WEB_PORT_HOST}:8088"
+    networks:
+      - pikp_net
+    volumes:
+      - ../platform/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ../platform/superset/bootstrap.sh:/app/docker/project/bootstrap.sh:ro
+      - ../../data/superset:/app/superset_home
+    command:
+      - /bin/bash
+      - /app/docker/project/bootstrap.sh
