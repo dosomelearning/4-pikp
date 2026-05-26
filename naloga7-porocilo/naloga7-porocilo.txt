@@ -1,0 +1,11 @@
+V poročilu boste opisali vaše izsledke ugotovljene na podlagi ustvarjenih KPI in dodatnih analiz, ki ste jih izvedli za vsako področje analize. Poudarek poročila naj bo na izsledkih (kaj ste s pomočjo BI rešitve in podatkov ugotovili) in ne na samem procesu. Poročilo strukturirajte po vaših KPI-jih in vanj vključite vizualizacije in njihovo razlago ter interpretacijo. Poročila ne pišite na dolgo, za vsak KPI je dovolj pol do 1 stran.
+
+Vključite:
+
+    Kratek opis problema oz. vaše domene (nekaj stavkov).
+    Navedba uporabljenih meritev in dimenzij (po alinejah)
+    Za vsak KPI
+        Opis KPI in izračuna (kot v tabeli kjer ste definirali KPI)
+        Analiza stanja na podlagi vrednosti KPI (interpretacija KPI in pomen vrednosti za vašo domeno)
+        Predstavitev dodatnih vizualizacij in interpretacija njihovih izsledkov glede na vaša področja analize.
+    Na koncu Executive summary (kratek povzetek glavnih ugotovitev na največ pol strani)

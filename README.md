@@ -8,6 +8,26 @@ This repository contains coursework-focused data warehousing assets, including:
 
 ![Naloga2b Diagram](docs/img/Ekipa12_Naloga2b.png)
 
+## Dashboard Outcome
+
+The project now includes Superset dashboards built on top of the PostgreSQL
+warehouse. The dashboards use virtual datasets generated from SQL in
+`naloga6/sql/`, with dashboard filters and cross-filtering configured for the
+visible chart dimensions.
+
+The KPI 1 dashboard shows accident frequency by time, severity, and geography.
+The example below is filtered to a selected time range, states, counties, and
+severity levels.
+
+![KPI 1 Accident Frequency Dashboard](naloga6/screenshots/db-kpi1-accident-frequency-filtered.png)
+
+The final relationship dashboard combines accident and air-quality measures at
+state/month grain. It compares accident count, duration, and severe-accident
+share against bad-air AQI share. These visuals show association only, not
+causation.
+
+![Accidents and Air Quality Relationship Dashboard](naloga6/screenshots/db-combo-accidents-air-quality-filtered.png)
+
 ## Environment Assumptions
 
 For reproducibility, current project work assumes:
@@ -62,6 +82,8 @@ Coming soon.
   - v2 dual-track architecture contract, schemas, migration, and datasource docs.
 - `naloga3/`, `naloga4/`, `naloga5/`
   - coursework compliance folders, mostly copied/adapted artifacts from authoritative project locations (primarily `scripts/etl/` and `naloga2b/`).
+- `naloga6/`
+  - Superset KPI dashboard SQL, screenshots, exports, and overview reports.
 
 ### Notes on `naloga*` folders
 

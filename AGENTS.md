@@ -73,6 +73,15 @@ This project is focused on dimensional modeling and warehouse-style design.
 - PostgreSQL persisted container data path is `data/pgdb`.
 - Treat `infra/` as container/tooling area; avoid storing transient runtime artifacts in git.
 
+## Autonomous Work Permissions and Boundaries
+- The agent may work autonomously inside this project when the user grants broad or "YOLO" permissions, but those permissions are project-scoped only.
+- The agent must not read, write, modify, delete, or otherwise touch anything outside this project unless the user explicitly instructs it for a specific action.
+- The agent must not delete or change unrelated files in this project or elsewhere on the system.
+- The agent must keep changes limited to files required by the active user request.
+- Broad execution permissions do not grant git write permission.
+- The agent must not commit, stage, push, pull, merge, rebase, reset, checkout, or perform any other git-changing operation without explicit user consent for that operation.
+- Read-only git commands remain allowed for inspection and validation.
+
 ## Collaboration Style
 - Ask clarifying questions when modeling choices are ambiguous or materially impact schema.
 - Prefer small, reversible edits and keep SQL and markdown aligned in the same change.

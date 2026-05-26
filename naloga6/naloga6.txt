@@ -1,0 +1,28 @@
+Izdelajte podrobna poročila za vašo izbrano področje iz prve naloge in ustvarite nadzorne plošče (ang. dashboards). Po potrebi dopolnite izbrane podatke.
+
+Za vaš primer boste v orodju Power BI Desktop kreirali dashboard na katerem boste skladno z predlogom rešitve v 1. nalogi vizualizirali vaše KPI in za vsakega ustvarili vsaj 3 dodatne grafe (vsak član naredi vizualizacijo KPI + 3 grafe), s katerimi boste poskušali podati odgovore na zastavljena vprašanja. Vizualizacijo KPI in vrsto grafov izberete glede na smernice, podane na predavanjih in izbiro na zagovoru tudi utemeljite. Vizualizacije naj bodo interaktivne, da lahko podatke filtriramo med tem ko gledamo grafe (torej ne samo, da določite filtre, ko ustvarjate poročila, ampak da ustvarite posebaj izbrane filtre, ki jih lahko tisti ki poročila ne morejo urejati, uporabljajo. Če zaradi konfliktov z operacijskim sistemom PowerBI ne morete namestiti / uporabljati lahko nalogo naredite v poljubnem drugem programu, ki pa mora podpirati zahtevane funkcionalnosti.
+
+Zahteve:
+Podatki
+
+    Podatke pridobite neposredno iz vašega podatkovnega skladišča.
+
+
+Kalkulacije
+
+    Ustvarite izračune za potrebne nove meritve, ki jih potrebujete za analizo, še posebej pa za vaše KPI.
+        Zavihek Modeling -> New measure -> napišete formulo.
+
+
+Vizualizacije
+
+    Vsak član naredi vizualizacijo KPI + 3 grafe, ki vam pomagajo raziskati vaša področja analize iz 1. naloge.
+        Pri vizualizaciji KPI mora biti razvidna trenutna številska vrednost ter tudi kaj ta vrednost pomeni (po domače: ali smo v "rdečem" ali v "zelenem"). Pomembno je tudi, da prikažete trend in primerjavo z relevantimi meritvami.
+        Za to lahko uporabite gauge, KPI ali drugo smiselno vizualizacijo.
+
+Grafi naj bodo raznoliki, vizualno sprejemljivi in narejeni v skladu s smernicami, ki jih dobite na predavanjih.
+Grafi naj bodo interaktivni:
+
+    Uporabite vsaj 2 "slicerja", s katerima lahko filtriramo prikaz obstoječe vizualizacije.
+    Vsaj 1 graf naj omogoča drill-down po hierarhiji dimenzije.
+
